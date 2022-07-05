@@ -81,28 +81,30 @@ void printOpAndPunc(string type, char* id){
     // }
 }
 
-void printInt(string type, char* id){
-    // fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
-    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
-    // bool success = false; // symbolTable.insert(id, type);
-    // // if(success)
-    //     // symbolTable.printAllScopeTable();
+void passYYLVAL(string type, string id) {
+    symbol_info *symbolInfo = symbolTable->lookup(id);
+    if(symbolInfo == nullptr){
+        symbolInfo = new symbol_info(id, type);
+    }
+    yylval.symbolvalue = symbolInfo;
 }
 
-void printFloat(string type, char* id){
-    // fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
-    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
-    // // bool success = // symbolTable.insert(id, type);
-    // // if(success)
-    // //     // symbolTable.printAllScopeTable();
+int printInt(string type, char* id){
+    /* symbol_info *symbolInfo = new symbol_info(id, type);
+    fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
+    fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id); */
+    passYYLVAL(type, id);
+    return CONST_INT;
+}
+
+int printFloat(string type, char* id){
+    passYYLVAL(type, id);
+    return CONST_FLOAT;
 }
 
 void printID(string type, char* id){
-    // fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
-    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
-    // // bool success = // symbolTable.insert(id, type);
-    // // if(success)
-    // //     // symbolTable.printAllScopeTable();
+    passYYLVAL(type, id);
+    return ID;
 }
 
 void printString(string type, string str){
@@ -120,10 +122,9 @@ void printChar(string type, char id, string yytext){
     // // if(success)
     // //     // symbolTable.printAllScopeTable();
 }
-void printKeyword(string type, char* id){
+int printKeyword(string type, char* id){
 
     // 
-// keywords ((if)|(else)|(for)|(while)|(do)|(break)|(int)|(char)|(float)|(double)|(void)|(return)|(switch)|(case)|(default)|(continue))
     //
     
     string up(id);
@@ -142,24 +143,14 @@ void printKeyword(string type, char* id){
         return FOR;
     if(up == "while")
         return WHILE;
-    if(up == "do")
-        return DO;
     if(up == "int")
         return INT;
-    if(up == "char")
-        return CHAR;
     if(up == "float")
         return FLOAT;
-    if(up == "double")
-        return DOUBLE;
     if(up == "void")
         return VOID;
     if(up == "return")
         return RETURN;
-    if(up == "default")
-        return DEFAULT;
-    if(up == "continue")
-        return CONTINUE;
     if(up == "printf")
         return PRINTLN;
 
@@ -242,104 +233,120 @@ empty_character ['][']
 {ws}                {}
 
 {keywords}          {
-                        printKeyword("keywords", yytext);
+                        return printKeyword("keywords", yytext);
 }
 
 {digit}+            {
-                        printInt("CONST_INT", yytext);
+                        return printInt("CONST_INT", yytext);
 
                     }
 
 {float_number}      {
-                        printFloat("CONST_FLOAT", yytext);
+                        return printFloat("CONST_FLOAT", yytext);
 }
 {const_char}        {
-                        char* str= yytext;
-                        string actual_string(yytext);
-                        int len = strlen(yytext);
-                        str[len - 1] = '\0';
-                        str++;
-                        len = strlen(str);
-                        char a = str[0];
-                        if(len>= 2) a = convertStringToChar(str);
-                        if(!(len >= 2 && a == ' '))
-                            printChar("CONST_CHAR", a, actual_string);
-                        else {
-                            printErrorLog("invalid character");
-                        }
+                        // char* str= yytext;
+                        // string actual_string(yytext);
+                        // int len = strlen(yytext);
+                        // str[len - 1] = '\0';
+                        // str++;
+                        // len = strlen(str);
+                        // char a = str[0];
+                        // if(len>= 2) a = convertStringToChar(str);
+                        // if(!(len >= 2 && a == ' '))
+                        //     printChar("CONST_CHAR", a, actual_string);
+                        // else {
+                        //     printErrorLog("invalid character");
+                        // }
 }
 
 
 {addop}             {
-                        printOpAndPunc("ADDOP", yytext);
+                        return ADDOP;
+                        // printOpAndPunc("ADDOP", yytext);
 }
 
 {incop}          {
-                        printOpAndPunc("INCOP", yytext);
+                        // printOpAndPunc("INCOP", yytext);
+                        return INCOP;
 }
 
 {decop}          {
-                        printOpAndPunc("DECOP", yytext);
+                        // printOpAndPunc("DECOP", yytext);
+                        return DECOP;
 }
 {mulop}            {
-                        printOpAndPunc("MULOP", yytext);
+                        // printOpAndPunc("MULOP", yytext);
+                        return MULOP;
 }    
 
 
 {relop}             {
-                        printOpAndPunc("RELOP", yytext);
+                        // printOpAndPunc("RELOP", yytext);
+                        return RELOP;
 }
 
 {assignop}             {
-                        printOpAndPunc("ASSIGNOP", yytext);
+                        // printOpAndPunc("ASSIGNOP", yytext);
+                        return ASSIGNOP;
 }
 
 
 {logicop}             {
-                        printOpAndPunc("LOGICOP", yytext);
+                        // printOpAndPunc("LOGICOP", yytext);
+                        return LOGICOP;
 }
 
 
 {not}             {
-                        printOpAndPunc("NOT", yytext);
+                        // printOpAndPunc("NOT", yytext);
+                        return NOT;
 }
 
 
 {lparen}             {
-                        printOpAndPunc("LPAREN", yytext);
+                        // printOpAndPunc("LPAREN", yytext);
+                        return LPAREN;
 }
 
 {rparen}             {
-                        printOpAndPunc("RPAREN", yytext);
+                        // printOpAndPunc("RPAREN", yytext);
+                        return RPAREN;
 }
 
 
 {lcurl}             {
-                        printOpAndPunc("LCURL", yytext);
+                        // printOpAndPunc("LCURL", yytext);
+                        return LCURL;
 }
 
 {rcurl}             {
-                        printOpAndPunc("RCURL", yytext);
+                        // printOpAndPunc("RCURL", yytext);
+                        return RCURL;
 }
 
 
 {lthird}            {
-                        printOpAndPunc("LTHIRD", yytext);
+                        // printOpAndPunc("LTHIRD", yytext);
+                        return LTHIRD;
 }
 
 {rthird}            {
-                        printOpAndPunc("RTHIRD", yytext);
+                        // printOpAndPunc("RTHIRD", yytext);
+                        return RTHIRD;
 }
 
 {comma}             {
-                        printOpAndPunc("COMMA", yytext);
+                        // printOpAndPunc("COMMA", yytext);
+                        return COMMA;
 }
 {semicolon}         {
-                        printOpAndPunc("SEMICOLON", yytext);
+                        // printOpAndPunc("SEMICOLON", yytext);
+                        return SEMICOLON;
 }
 
 {identifier}        {
-                        printID("ID", yytext);
+                        return printID("ID", yytext);
 }
 
 

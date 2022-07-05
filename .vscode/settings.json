@@ -4,6 +4,12 @@
         "1805047_hash_function.h": "c",
         "1805047_symbol_info_list.h": "c",
         "1805047_symbol_info.h": "c",
-        "additional_symbol_info.h": "c"
+        "additional_symbol_info.h": "c",
+        "deque": "c",
+        "list": "c",
+        "string": "c",
+        "unordered_map": "c",
+        "unordered_set": "c",
+        "vector": "c"
     }
 }

@@ -39,23 +39,77 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     program = 258
+     IF = 258,
+     ELSE = 259,
+     FOR = 260,
+     WHILE = 261,
+     INT = 262,
+     FLOAT = 263,
+     VOID = 264,
+     RETURN = 265,
+     ASSIGNOP = 266,
+     NOT = 267,
+     LPAREN = 268,
+     RPAREN = 269,
+     LCURL = 270,
+     RCURL = 271,
+     LTHIRD = 272,
+     RTHIRD = 273,
+     COMMA = 274,
+     SEMICOLON = 275,
+     PRINTLN = 276,
+     ID = 277,
+     CONST_INT = 278,
+     CONST_FLOAT = 279,
+     ADDOP = 280,
+     INCOP = 281,
+     DECOP = 282,
+     MULOP = 283,
+     RELOP = 284,
+     LOGICOP = 285
    };
 #endif
 /* Tokens.  */
-#define program 258
+#define IF 258
+#define ELSE 259
+#define FOR 260
+#define WHILE 261
+#define INT 262
+#define FLOAT 263
+#define VOID 264
+#define RETURN 265
+#define ASSIGNOP 266
+#define NOT 267
+#define LPAREN 268
+#define RPAREN 269
+#define LCURL 270
+#define RCURL 271
+#define LTHIRD 272
+#define RTHIRD 273
+#define COMMA 274
+#define SEMICOLON 275
+#define PRINTLN 276
+#define ID 277
+#define CONST_INT 278
+#define CONST_FLOAT 279
+#define ADDOP 280
+#define INCOP 281
+#define DECOP 282
+#define MULOP 283
+#define RELOP 284
+#define LOGICOP 285
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 13 "1805047.y"
+#line 15 "1805047.y"
 {
 	symbol_info* symbolvalue;
 }
 /* Line 1529 of yacc.c.  */
-#line 59 "y.tab.h"
+#line 113 "y.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

@@ -31,7 +31,7 @@ symbol_info *current_function=NULL;
 
 //symbol table declaration
 int total_buckets=31;
-symbol_table *symboltable = new symbol_table(total_buckets);
+symbol_table *symbolTable = new symbol_table(total_buckets);
 
 
 
