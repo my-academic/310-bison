@@ -1,5 +1,10 @@
+
+
 #include "1805047_symbol_info.h"
 using namespace std;
+
+#ifndef SYMBOL_INFO_LIST_H
+#define SYMBOL_INFO_LIST_H
 
 class symbol_info_list
 {
@@ -120,3 +125,5 @@ public:
         return {-1, nullptr};
     }
 };
+
+#endif

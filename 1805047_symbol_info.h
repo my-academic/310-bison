@@ -1,25 +1,32 @@
-#include<bits/stdc++.h>
+
+#include "additional_symbol_info.h"
 using namespace std;
+// FILE *logout;
+// FILE *tokenout;
 
-
-FILE *logout;
-FILE *tokenout;
-
-class symbol_info
+class symbol_info : public additional_symbol_info
 {
 private:
     string name;
     string type;
     symbol_info *next;
-    
+
     bool khali;
     symbol_info *prev;
+
 public:
-    symbol_info(string n, string t): name(n), type(t){
+    symbol_info(string n, string t) : name(n), type(t)
+    {
         next = nullptr;
     }
 
-    ~symbol_info();
+    ~symbol_info()
+    {
+        // cout << "calling destructor of symbol info" << endl;
+        next = nullptr;
+        // free(next);
+        // delete next;
+    }
 
     string getName() const { return name; }
     void setName(const string &name_) { name = name_; }
@@ -36,17 +43,9 @@ public:
     bool getKhali() const { return khali; }
     void setKhali(bool khali_) { khali = khali_; }
 
-    void print() {
-        fprintf(logout, " < %s : %s> ", name.c_str(), type.c_str());
+    void print()
+    {
+        // fprintf(logout, " < %s : %s> ", name.c_str(), type.c_str());
         // cout << "< " << name << " : " << type << "> ";
     }
-    
 };
-
-symbol_info::~symbol_info()
-{
-    // cout << "calling destructor of symbol info" << endl;
-    next = nullptr;
-    // free(next);
-    // delete next;
-}

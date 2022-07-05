@@ -1,7 +1,9 @@
 #include "1805047_symbol_info_list.h"
-#include "1805047_hash_function.h"
+// #include "1805047_hash_function.h"
 using namespace std;
 
+#ifndef SCOPE_TABLE_H
+#define SCOPE_TABLE_H
 class scope_table
 {
 private:
@@ -11,6 +13,14 @@ private:
     string id;
     int count;
     bool flagForDeletingParentScope;
+    unsigned int sdbmhash(string key)
+    {
+        unsigned int hash = 0;
+        for (auto c : key)
+            hash = c + (hash << 6) + (hash << 16) - hash;
+
+        return hash;
+    }
 
 public:
     scope_table(long s, scope_table *parent) : bucketSize(s), parentScope(parent)
@@ -26,7 +36,21 @@ public:
         else
             id = "1";
     }
-    ~scope_table();
+    ~scope_table()
+    {
+        // // cout << "calling the destructor of scope table" << endl;
+        // // cout << "ScopeTable with id " << id << " removed" << endl;
+        delete[] arrayOfSymbolInfoList;
+        if (flagForDeletingParentScope)
+            delete parentScope;
+        else
+            parentScope = nullptr;
+
+        // for (size_t i = 0; i < 1; i++)
+        // {
+        //     delete arrayOfSymbolInfoList;
+        // }
+    }
 
     bool insert(string key, string value)
     {
@@ -41,7 +65,7 @@ public:
         }
         else
         {
-            fprintf(logout, "\n%s already exists in current ScopeTable\n", key.c_str());
+            // fprintf(, "\n%s already exists in current ScopeTable\n", key.c_str());
             // cout<< "<" << key << "," << value << "> already exists in current ScopeTable" << endl;
         }
         return false;
@@ -84,15 +108,16 @@ public:
 
     void print()
     {
-        fprintf(logout, "\nScopeTable # %s \n", id.c_str());
+        // fprintf(logout, "\nScopeTable # %s \n", id.c_str());
         // cout << endl << "ScopeTable # " << id << endl;
         for (size_t i = 0; i < bucketSize; i++)
         {
-            if(this->arrayOfSymbolInfoList[i].isEmpty()) continue;
-            fprintf(logout, "%lu --> ", i);
+            if (this->arrayOfSymbolInfoList[i].isEmpty())
+                continue;
+            // fprintf(logout, "%lu --> ", i);
             // cout << i << " -->  ";
             this->arrayOfSymbolInfoList[i].print();
-            fprintf(logout, "\n");
+            // fprintf(logout, "\n");
             // cout << endl;
         }
         // cout << endl;
@@ -110,18 +135,4 @@ public:
     string getId() const { return id; }
 };
 
-scope_table::~scope_table()
-{
-    // // cout << "calling the destructor of scope table" << endl;
-    // // cout << "ScopeTable with id " << id << " removed" << endl;
-    delete[] arrayOfSymbolInfoList;
-    if(flagForDeletingParentScope)
-        delete parentScope;
-    else 
-        parentScope = nullptr;
-
-    // for (size_t i = 0; i < 1; i++)
-    // {
-    //     delete arrayOfSymbolInfoList;
-    // }
-}
+#endif

@@ -3,32 +3,31 @@
 #include<cstdlib>
 #include<cstring>
 #include<cmath>
-#include "symbol.h"
-#define YYSTYPE 1805047_symbol_info*
+#include "1805047_symbol_table.h"
+#include "utils.h"
 
 using namespace std;
 
-int yyparse(void);
-int yylex(void);
-extern FILE *yyin;
+%}
 
-1805047_symbol_table *table;
-
-
-void yyerror(char *s)
-{
-	//write your code
+%union{
+	symbol_info* symbolvalue;
 }
 
 
-%}
+%token IF ELSE FOR WHILE DO INT CHAR FLOAT DOUBLE VOID RETURN DEFAULT CONTINUE PRINTLN ASSIGNOP NOT LPAREN RPAREN LCURL RCURL LTHIRD RTHIRD COMMA SEMICOLON
 
-%token IF ELSE FOR WHILE
+%token<symbolvalue> ID CONST_INT CONST_FLOAT CONST_CHAR ADDOP INCOP DECOP MULOP RELOP LOGICOP
+%token<symbolvalue> STRING
 
-%left 
-%right
 
-%nonassoc 
+%type<symbolvalue> program unit type_specifier declaration_list parameter_list func_definition func_declaration compound_statement statements statement expression_statement variable expression logic_expression rel_expression simple_expression term unary_expression factor arguments argument_list var_declaration 
+/* %left
+%right*/
+/* %nonassoc LOWER_THAN_RPAREN
+%nonassoc RPAREN
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE */
 
 
 %%
@@ -148,32 +147,25 @@ arguments : arguments COMMA logic_expression
 	      ;
  
 
+
 %%
 int main(int argc,char *argv[])
 {
-
+	FILE *fp;
 	if((fp=fopen(argv[1],"r"))==NULL)
 	{
 		printf("Cannot Open Input File.\n");
 		exit(1);
 	}
 
-	fp2= fopen(argv[2],"w");
-	fclose(fp2);
-	fp3= fopen(argv[3],"w");
-	fclose(fp3);
-	
-	fp2= fopen(argv[2],"a");
-	fp3= fopen(argv[3],"a");
-	
 
+	logfile.open("log.txt");
+	errorfile.open("error.txt");
 	yyin=fp;
 	yyparse();
-	
 
-	fclose(fp2);
-	fclose(fp3);
-	
+	fclose(yyin);
+	logfile.close();
+	errorfile.close();
 	return 0;
 }
-

@@ -1,20 +1,22 @@
 %option noyywrap
+
 %x state_string
 %x state_single_line_comment
 %x state_multi_line_comment
-%x state_character
 
 %{
 #include<stdio.h>
-#include "1805047_symbol_table.h"
 #include<iostream>
 #include<algorithm>
 #include<stdlib.h>
 #include<string>
+#include "1805047_symbol_table.h"
+#include "y.tab.h"
 using namespace std;
 
+// extern ofstream logfile, errorfile;
 extern YYSTYPE yylval;
-extern 1805047_symbol_table *table;
+extern symbol_table *symbolTable;
 void yyerror(char *);
 
 int line_count=1;
@@ -22,135 +24,173 @@ int start_point = 1;
 int error_count = 0;
 string taking_string = "";
 int bucket_size = 7;
-symbol_table symbolTable(bucket_size);
+// symbol_table // symbolTable(bucket_size);
 
 
 string fixString(string str){
-    // cout << "before " << str << endl;
-    for(int i = 0; i < str.size(); i++){
-        if(str[i] == '\\' && str[i+1] == 't'){
-            str.erase(i + 1, 1);
-            // cout << "tab" << endl;
-            str[i] = '\t';
-        }
-        else if(str[i] == '\\' && str[i+1] == 'n'){
-            str.erase(i + 1, 1);
-            str[i] = '\n';
-        }
-        else if(str[i] == '\\' && str[i+1] == '\"'){
-            str.erase(i + 1, 1);
-            str[i] = '\"';
-        }
-        else if(str[i] == '\\' && str[i+1] == '\''){
-            str.erase(i + 1, 1);
-            str[i] = '\'';
-        }
-        else if(str[i] == '\\' && str[i+1] == '\\'){
-            str.erase(i + 1, 1);
-            str[i] = '\\';
-        }
-        else if(str[i] == '\\' && str[i+1] == 'b'){
-            str.erase(i + 1, 1);
-            str[i] = '\b';
-        }
-        else if(str[i] == '\\' && str[i+1] == 'f'){
-            str.erase(i + 1, 1);
-            str[i] = '\f';
-        }
-        else if(str[i] == '\\' && str[i + 1] == '\n'){
-            //new line
-            // cout << line_count << endl;
-            str.erase(i , 2);
-            i--;
-        }
-    }
-    return str;
+    // // cout << "before " << str << endl;
+    // for(int i = 0; i < str.size(); i++){
+    //     if(str[i] == '\\' && str[i+1] == 't'){
+    //         str.erase(i + 1, 1);
+    //         // cout << "tab" << endl;
+    //         str[i] = '\t';
+    //     }
+    //     else if(str[i] == '\\' && str[i+1] == 'n'){
+    //         str.erase(i + 1, 1);
+    //         str[i] = '\n';
+    //     }
+    //     else if(str[i] == '\\' && str[i+1] == '\"'){
+    //         str.erase(i + 1, 1);
+    //         str[i] = '\"';
+    //     }
+    //     else if(str[i] == '\\' && str[i+1] == '\''){
+    //         str.erase(i + 1, 1);
+    //         str[i] = '\'';
+    //     }
+    //     else if(str[i] == '\\' && str[i+1] == '\\'){
+    //         str.erase(i + 1, 1);
+    //         str[i] = '\\';
+    //     }
+    //     else if(str[i] == '\\' && str[i+1] == 'b'){
+    //         str.erase(i + 1, 1);
+    //         str[i] = '\b';
+    //     }
+    //     else if(str[i] == '\\' && str[i+1] == 'f'){
+    //         str.erase(i + 1, 1);
+    //         str[i] = '\f';
+    //     }
+    //     else if(str[i] == '\\' && str[i + 1] == '\n'){
+    //         //new line
+    //         // cout << line_count << endl;
+    //         str.erase(i , 2);
+    //         i--;
+    //     }
+    // }
+    // return str;
 }
 
 void printOpAndPunc(string type, char* id){
-    fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
-    fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
-    string str(id);
-    if(str == "{"){
-        symbolTable.enterScope();
-    }
-    else if(str == "}"){
-        symbolTable.exitScope();
-    }
+    // fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
+    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
+    // string str(id);
+    // if(str == "{"){
+    //     // symbolTable.enterScope();
+    // }
+    // else if(str == "}"){
+    //     // symbolTable.exitScope();
+    // }
 }
 
 void printInt(string type, char* id){
-    fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
-    fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
-    bool success = symbolTable.insert(id, type);
-    if(success)
-        symbolTable.printAllScopeTable();
+    // fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
+    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
+    // bool success = false; // symbolTable.insert(id, type);
+    // // if(success)
+    //     // symbolTable.printAllScopeTable();
 }
 
 void printFloat(string type, char* id){
-    fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
-    fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
-    bool success = symbolTable.insert(id, type);
-    if(success)
-        symbolTable.printAllScopeTable();
+    // fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
+    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
+    // // bool success = // symbolTable.insert(id, type);
+    // // if(success)
+    // //     // symbolTable.printAllScopeTable();
 }
 
 void printID(string type, char* id){
-    fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
-    fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
-    bool success = symbolTable.insert(id, type);
-    if(success)
-        symbolTable.printAllScopeTable();
+    // fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
+    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
+    // // bool success = // symbolTable.insert(id, type);
+    // // if(success)
+    // //     // symbolTable.printAllScopeTable();
 }
 
 void printString(string type, string str){
-    string actual_string = fixString(str);
-    fprintf(tokenout, "<%s, %s> ",type.c_str(), actual_string.c_str());
-    fprintf(logout, "\nLine no %d: Token <%s> Lexeme \"%s\" found --> <STRING, %s>\n", start_point, type.c_str(), str.c_str(), actual_string.c_str());
+    // string actual_string = fixString(str);
+    // fprintf(tokenout, "<%s, %s> ",type.c_str(), actual_string.c_str());
+    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme \"%s\" found --> <STRING, %s>\n", start_point, type.c_str(), str.c_str(), actual_string.c_str());
 }
 
 
 void printChar(string type, char id, string yytext){
-    fprintf(tokenout, "<%s, %c> ",type.c_str(), id);
-    fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found --> <CHAR_CONST, %c>\n", line_count, type.c_str(), yytext.c_str(), id );
-    string str(1, id);
-    bool success = symbolTable.insert(yytext, type);
-    if(success)
-        symbolTable.printAllScopeTable();
+    // fprintf(tokenout, "<%s, %c> ",type.c_str(), id);
+    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found --> <CHAR_CONST, %c>\n", line_count, type.c_str(), yytext.c_str(), id );
+    // string str(1, id);
+    // // bool success = // symbolTable.insert(yytext, type);
+    // // if(success)
+    // //     // symbolTable.printAllScopeTable();
 }
 void printKeyword(string type, char* id){
+
+    // 
+// keywords ((if)|(else)|(for)|(while)|(do)|(break)|(int)|(char)|(float)|(double)|(void)|(return)|(switch)|(case)|(default)|(continue))
+    //
+    
     string up(id);
-    transform(up.begin(), up.end(), up.begin(), ::toupper);
-    fprintf(tokenout, "<%s> ", up.c_str());
-    fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, up.c_str(), id);
+
+        
+    // transform(up.begin(), up.end(), up.begin(), ::toupper);
+    // fprintf(tokenout, "<%s> ", up.c_str());
+    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, up.c_str(), id);
+
+
+    if(up == "if")
+        return IF;
+    if(up == "else")
+        return ELSE;
+    if(up == "for")
+        return FOR;
+    if(up == "while")
+        return WHILE;
+    if(up == "do")
+        return DO;
+    if(up == "int")
+        return INT;
+    if(up == "char")
+        return CHAR;
+    if(up == "float")
+        return FLOAT;
+    if(up == "double")
+        return DOUBLE;
+    if(up == "void")
+        return VOID;
+    if(up == "return")
+        return RETURN;
+    if(up == "default")
+        return DEFAULT;
+    if(up == "continue")
+        return CONTINUE;
+    if(up == "printf")
+        return PRINTLN;
+
 }
 
 char convertStringToChar(string str){
-    if(str == "\\n") return '\n';
-    if(str == "\\t") return '\t';
-    if(str == "\\\\") return '\\';
-    if(str == "\\\'") return '\'';
-    if(str == "\\\"") return '\"';
-    if(str == "\\a") return '\a';
-    if(str == "\\f") return '\f';
-    if(str == "\\r") return '\r';
-    if(str == "\\b") return '\b';
-    if(str == "\\v") return '\v';
-    if(str == "\\0") return '\0';
+    // if(str == "\\n") return '\n';
+    // if(str == "\\t") return '\t';
+    // if(str == "\\\\") return '\\';
+    // if(str == "\\\'") return '\'';
+    // if(str == "\\\"") return '\"';
+    // if(str == "\\a") return '\a';
+    // if(str == "\\f") return '\f';
+    // if(str == "\\r") return '\r';
+    // if(str == "\\b") return '\b';
+    // if(str == "\\v") return '\v';
+    // if(str == "\\0") return '\0';
     
-    //error
-    return ' ';
+    // //error
+    // return ' ';
 }
 
 void printErrorLog(string str, int error_line = line_count, string error = yytext){
     // cout << "here " <<  error  << " oka ";
-    fprintf(logout, "\nError at line no %d: %s %s\n", error_line, str.c_str(), error.c_str());
-    error_count++;
+    // fprintf(logout, "\nError at line no %d: %s %s\n", error_line, str.c_str(), error.c_str());
+    // error_count++;
 }
 
 void printCommentLog(){
     // taking_string.erase(taking_string.size() - 1, 1);
-    fprintf(logout, "\nLine no %d: Token <COMMENT> Lexeme %s found\n", start_point, taking_string.c_str());
+    // fprintf(logout, "\nLine no %d: Token <COMMENT> Lexeme %s found\n", start_point, taking_string.c_str());
 }
 
 
@@ -168,7 +208,8 @@ const_char ((\'([^\\\'(\n)]|{special_character})\'))
 
 addop [+-]
 mulop [*/%]
-incop (\+\+|--)
+incop (\+\+)
+decop (--)
 relop (<|(<=)|>|(>=)|(==)|(!=))
 assignop =
 logicop (&&|\|\|)
@@ -182,7 +223,7 @@ rthird []]
 comma (,)
 semicolon (;)
 identifier [A-Za-z_]+[A-Za-z0-9_]*
-keywords ((if)|(else)|(for)|(while)|(do)|(break)|(int)|(char)|(float)|(double)|(void)|(return)|(switch)|(case)|(default)|(continue))
+keywords ((if)|(else)|(for)|(while)|(do)|(int)|(char)|(float)|(double)|(void)|(return)|(default)|(continue)|(printf))
 special_character_2 ((\n)|(\t)|(\\)|(\')|(\")|(\a)|(\f)|(\r)|(\b)|(\v)|(\0))
 special_character_3 ((\t)|(\\)|(\')|(\")|(\a)|(\f)|(\r)|(\b)|(\v)|(\0))
 
@@ -235,6 +276,10 @@ empty_character ['][']
 
 {incop}          {
                         printOpAndPunc("INCOP", yytext);
+}
+
+{decop}          {
+                        printOpAndPunc("DECOP", yytext);
 }
 {mulop}            {
                         printOpAndPunc("MULOP", yytext);
@@ -443,10 +488,10 @@ empty_character ['][']
 %%
 
 
-int yywrap(void)
-{
-	return 1;
-}
+// int yywrap(void)
+// {
+// 	return 1;
+// }
 
 
 
@@ -468,7 +513,7 @@ int yywrap(void)
 
 // 	yyin= fin;
 // 	yylex();
-//     symbolTable.printAllScopeTable();
+//     // symbolTable.printAllScopeTable();
 //     fprintf(logout, "Total lines: %d\n", line_count);
 //     fprintf(logout, "Total errors: %d\n", error_count);
 // 	fclose(yyin);
