@@ -71,17 +71,17 @@ public:
         // // cout << "Not found" << endl;
         return nullptr;
     }
-    void printCurrentScopeTable()
+    void printCurrentScopeTable(FILE* logout)
     {
-        this->scopeTable->print();
+        this->scopeTable->print(logout);
     }
 
-    void printAllScopeTable()
+    void printAllScopeTable(FILE* logout)
     {
         scope_table *temp = this->scopeTable;
         while (temp != nullptr)
         {
-            temp->print();
+            temp->print(logout);
             temp = temp->getParentScope();
         }
     }

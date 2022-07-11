@@ -10,6 +10,15 @@
         "string": "c",
         "unordered_map": "c",
         "unordered_set": "c",
-        "vector": "c"
+        "vector": "c",
+        "random": "c",
+        "any": "c",
+        "filesystem": "c",
+        "functional": "c",
+        "map": "c",
+        "set": "c",
+        "*.tcc": "c",
+        "__config": "c",
+        "__nullptr": "c"
     }
 }

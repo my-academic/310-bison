@@ -1,88 +1,186 @@
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 using namespace std;
 
-
-int yyparse(void);
-int yylex(void);
-extern FILE *yyin;
-//line and error count
+// line and error count
 extern int line_count;
-extern int error_count;
-int syntax_error, err_line;
+extern int lexical_error_count;
+int syntax_error_count, err_line;
 
+extern char *yytext;
 
-extern char* yytext;
+// log and error file
+FILE *logout, *errorout;
 
-
-//log and error file
-ofstream logfile, errorfile;
-
-
-//storing variable data type
+// storing variable data type
 string datatype;
+vector<symbol_info *> variables;
 
+// for function parameters
+string return_type;
+vector<symbol_info *> parameters;
+int count_of_parameters_without_name = 0;
+bool isFunctionStarted = true;
 
-//for function parameters
-vector<symbol_info*> parameters;
-vector<string> paramTypeList;
-symbol_info *current_function=NULL;
+// vector<string> paramTypeList;
+// symbol_info *current_function=NULL;
 
+int bucket_size = 7;
+symbol_table *symbolTable = new symbol_table(bucket_size);
 
+string keywordArray[] = {"IF", "ELSE", "FOR", "WHILE", "INT", "FLOAT", "VOID", "RETURN", "PRINTLN"};
+set<string> keywords(keywordArray, keywordArray + 9);
 
-//symbol table declaration
-int total_buckets=31;
-symbol_table *symbolTable = new symbol_table(total_buckets);
+enum non_terminals
+{
+  start,
+  program,
+  unit,
+  func_declaration,
+  func_definition,
+  parameter_list,
+  compound_statement,
+  var_declaration,
+  type_specifier,
+  declaration_list,
+  statements,
+  statement,
+  expression_statement,
+  variable,
+  expression,
+  logic_expression,
+  rel_expression,
+  simple_expression,
+  term,
+  unary_expression,
+  factor,
+  argument_list,
+  arguments
+};
 
-
-
-// //to use in stack array index
-// enum nonterminals{start, program, unit, func_declaration, func_definition, parameter_list, compound_statement, var_declaration, type_specifier,declaration_list,
-// statements, statement, expression_statement, variable, expression, logic_expression, rel_expression, simple_expression, term, unary_expression, factor, argument_list,
-// arguments};
-
-// //saving code of non nonterminals in stack
-// stack<string> codepart[arguments+1];
+vector<stack<string>> non_terminals_stack(50);
 
 void yyerror(char *s)
 {
-	//fprintf(stderr,"%s\n",s);
-	// err_line = line_count;
-	// cout<<"Error at line no "<<line_count<<" : "<<s<<" lexeme: "<<yytext<<endl;
-	// logfile<<"Error at line "<<line_count<<": "<<s<<endl<<endl;
-	// errorfile<<"Error at line "<<line_count<<": "<<s<<endl<<endl;
-  // syntax_error++;
-	return;
+  // fprintf(stderr,"%s\n",s);
+  //  err_line = line_count;
+  //  cout<<"Error at line no "<<line_count<<" : "<<s<<" lexeme: "<<yytext<<endl;
+  //  logfile<<"Error at line "<<line_count<<": "<<s<<endl<<endl;
+  //  errorfile<<"Error at line "<<line_count<<": "<<s<<endl<<endl;
+  //  syntax_error++;
+  return;
 }
 
-// void saveinStack(nonterminals nt, string str){
-//   //cout<<nt<<": "<<str<<endl;
-//   codepart[nt].push(str);
-// }
+void printLog(string str1, string str2, string str3)
+{
+  fprintf(logout, "Line %d: %s : %s\n%s\n", line_count, str1.c_str(), str2.c_str(), str3.c_str());
+}
 
+void stackPush(non_terminals nt, string str)
+{
+  // cout<<nt<<": "<<str<<endl;
+  non_terminals_stack[nt].push(str);
+}
 
+string stackPop(non_terminals nt)
+{
+  string str = non_terminals_stack[nt].top();
+  non_terminals_stack[nt].pop();
+  return str;
+}
 
-// string getfromStack(nonterminals nt){
-//   string str =  codepart[nt].top();
-//   codepart[nt].pop();
-//   return str;
-// }
+void setVariableRelatedValues(symbol_info *symbolInfo, string type)
+{
+  symbolInfo->id_type = VARIABLE;
+  symbolInfo->variable_type = type;
+  symbolInfo->int_value = 0;
+  symbolInfo->float_value = 0;
+}
 
+void insertDeclarationListRecord(symbol_info *symbolInfo)
+{
+  variables.push_back(symbolInfo);
+}
 
-// void printTologFile(string rule){
-//   logfile<<"Line "<<line_count<<": "<<rule <<endl<<endl;
-// }
+void setVariableValues(string type)
+{
+  for (int i = 0; i < variables.size(); i++)
+  {
+    // setVariableRelatedValues(variables[i], type);
+    symbol_info *s = symbolTable->lookup(variables[i]->getName());
+    // cout << variables[i] -> getName() << endl;
+    if (s == nullptr)
+    {
+      symbolTable->insert(variables[i]->getName(), variables[i]->getType());
+      s = symbolTable->lookup(variables[i]->getName());
+      setVariableRelatedValues(s, type);
+    }
+    else
+    {
+      // error
+      fprintf(errorout, "line %d : variable error\n", line_count);
+    }
+    delete variables[i];
+  }
 
-// void printTextToLogfile(string text){
-//   logfile<<text<<endl<<endl;
-// }
+  variables.clear();
+}
 
+void insertIntoParameters(symbol_info* symbolInfo){
+  parameters.push_back(symbolInfo);
+}
+
+void setFunctionRelatedValues(symbol_info *symbolInfo, string return_type, bool is_defined)
+{
+  symbolInfo->return_type = return_type;
+  symbolInfo->is_defined = is_defined;
+  for(int i = 0; i < parameters.size(); i++){
+    symbolInfo->sequence_of_parameters.push_back(parameters[i]);
+  }
+  parameters.clear();
+}
+
+void setFunctionValues(string return_type, symbol_info *symbolInfo, bool is_defined)
+{
+  symbol_info *s = symbolTable->lookup(symbolInfo->getName());
+  if (s == nullptr)
+  {
+    symbolTable->insert(symbolInfo->getName(), symbolInfo->getType());
+    s = symbolTable->lookup(symbolInfo->getName());
+    setFunctionRelatedValues(s, return_type, is_defined);
+  } else if (s->is_defined == false){
+    // todo: match return type & parameters list
+    setFunctionRelatedValues(s, return_type, is_defined);
+  }
+  else
+  {
+    // error
+    fprintf(errorout, "line %d : function error\n", line_count);
+  }
+  isFunctionStarted = true;
+  delete symbolInfo;
+}
+
+void enterNewScope(){
+  symbolTable->enterScope();
+  for (size_t i = 0; isFunctionStarted && i < parameters.size(); i++)
+  {
+    symbolTable->insert(parameters[i]->getName(), parameters[i]->getType());
+  }
+  isFunctionStarted = false;
+}
+
+void printTable(){
+  symbolTable->printAllScopeTable(logout);
+}
+
+void exitScope() {
+  symbolTable->exitScope();
+}
 // void print_error_recovery_mode(string msg){
 //   logfile<<"Error at line "<<line_count<<": "<<msg<<endl<<endl;
 // 	errorfile<<"Error at line "<<line_count<<": "<<msg<<endl<<endl;
 //   syntax_error++;
 // }
-
-
 
 // void insert_variable_to_table(string datatype, string name){
 //   SymbolInfo *s = new SymbolInfo(name,"ID");
@@ -91,7 +189,6 @@ void yyerror(char *s)
 //   //cout<<"handle_variable func 91"<<endl;
 //   symboltable->Insert(s);
 // }
-
 
 // void handle_variable(string name){
 //   if(datatype=="VOID"){
@@ -119,11 +216,6 @@ void yyerror(char *s)
 //     }
 //   }
 // }
-
-
-
-
-
 
 // void handle_array(string name, string arrsize){
 //   if(datatype=="VOID"){
@@ -157,7 +249,6 @@ void yyerror(char *s)
 //   }
 // }
 
-
 // bool search_in_parameter_list(string name){
 // 	for(SymbolInfo *s:parameters){
 // 		if(s->getName()==name){
@@ -166,8 +257,6 @@ void yyerror(char *s)
 // 	}
 // 	return false;
 // }
-
-
 
 // void handle_func_parameter(string type, string name){
 //   //cout<<"datatype: "<<datatype<<"    type: "<<type<<" name: "<<name<<endl;
@@ -189,7 +278,6 @@ void yyerror(char *s)
 //   s->setIDType("VARIABLE");
 //   parameters.push_back(s);
 // }
-
 
 // void handle_func_declaration(string retType, string name){
 //   SymbolInfo *temp1 = symboltable->Look_up(name, "FUNCTION");
@@ -216,11 +304,6 @@ void yyerror(char *s)
 //     syntax_error++;
 //   }
 // }
-
-
-
-
-
 
 // void handle_func_defination(string datatype, string name){
 //   SymbolInfo *temp1 = symboltable->Look_up(name, "FUNCTION");
@@ -287,10 +370,6 @@ void yyerror(char *s)
 //   }
 // }
 
-
-
-
-
 // void handle_func_return_type(SymbolInfo *exp){
 //   if(current_function!=NULL && current_function->getIDType()=="FUNCTION" && exp->getVariableDataType()!=current_function->getFuncRetType()){
 // 		if(current_function->getFuncRetType()=="FLOAT" && exp->getVariableDataType()=="INT"){
@@ -326,7 +405,6 @@ void yyerror(char *s)
 //   }
 // 	return called_func;
 // }
-
 
 // void check_func_arguements(SymbolInfo *f){
 //   //cout<<f->getName()<<endl;
@@ -369,13 +447,6 @@ void yyerror(char *s)
 //   //cout<<"here i am 5\n";
 // }
 
-
-
-
-
-
-
-
 // SymbolInfo* handle_var_ID(SymbolInfo *id){
 //   SymbolInfo *temp = symboltable->Look_up(id->getName());
 //   if(temp!=NULL && temp->getIDType()=="ARRAY"){
@@ -401,12 +472,6 @@ void yyerror(char *s)
 //   return temp;
 // }
 
-
-
-
-
-
-
 // SymbolInfo* handle_assignop(SymbolInfo *var, SymbolInfo *exp){
 
 //   if(var==NULL || exp==NULL) return NULL;
@@ -425,7 +490,6 @@ void yyerror(char *s)
 //     syntax_error++;
 //     return var;
 //   }
-
 
 //   if(exp->getIDType()=="FUNCTION"){
 //     string rettype = exp->getFuncRetType();
@@ -485,13 +549,6 @@ void yyerror(char *s)
 //   return var;
 // }
 
-
-
-
-
-
-
-
 // SymbolInfo* handle_addop_unary_exp(SymbolInfo *op, SymbolInfo *exp){
 //   if(exp->getVariableDataType()=="VOID" || exp->getFuncRetType()=="VOID"){
 //     errorfile<<"Error at line "<<line_count<<": Type Mismatch(void)"<<endl<<endl;
@@ -517,8 +574,6 @@ void yyerror(char *s)
 //   }
 //   return t;
 // }
-
-
 
 // SymbolInfo* handle_not_unary_exp(SymbolInfo *exp){
 //   if(exp->getVariableDataType()=="VOID" || exp->getFuncRetType()=="VOID"){
@@ -548,10 +603,6 @@ void yyerror(char *s)
 
 //   return t;
 // }
-
-
-
-
 
 // SymbolInfo *handle_ex_op_ex_function(SymbolInfo *e1, SymbolInfo *op, SymbolInfo *e2){
 // 	SymbolInfo *t = new SymbolInfo();
@@ -748,9 +799,6 @@ void yyerror(char *s)
 // 	 return t;
 
 //  }
-
-
-
 
 // SymbolInfo* handle_simexp_relop_simexp(SymbolInfo *exp1, SymbolInfo *relop, SymbolInfo *exp2){
 //   SymbolInfo *t = new SymbolInfo();
@@ -1117,19 +1165,6 @@ void yyerror(char *s)
 //   return t;
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 // SymbolInfo* handle_relexp_logicop_relexp(SymbolInfo *exp1,SymbolInfo *logiop, SymbolInfo *exp2){
 //   string type1 = exp1->getVariableDataType();
 //   string type2 = exp2->getVariableDataType();
@@ -1310,10 +1345,6 @@ void yyerror(char *s)
 //   return t;
 // }
 
-
-
-
-
 // SymbolInfo* handle_simexp_addop_term(SymbolInfo *exp, SymbolInfo *addop, SymbolInfo *ter){
 //   SymbolInfo *t = new SymbolInfo();
 //   t->setIDType("VARIABLE");
@@ -1450,22 +1481,11 @@ void yyerror(char *s)
 //   return t;
 // }
 
-
-
-
-
 // void print_divide_by_zero(){
 // 		errorfile<<"Error at line "<<line_count<<": Divide by Zero"<<endl<<endl;
 // 		logfile<<"Error at line "<<line_count<<": Divide by Zero"<<endl<<endl;
 // 		syntax_error++;
 // }
-
-
-
-
-
-
-
 
 // SymbolInfo* handle_term_mulop_unary_exp(SymbolInfo *ter, SymbolInfo *mulop, SymbolInfo *exp){
 //   SymbolInfo *t = new SymbolInfo();
@@ -1623,7 +1643,6 @@ void yyerror(char *s)
 // 			}
 // 		}
 
-
 //     }
 
 // 		else if(ter->getIDType()=="FUNCTION"){
@@ -1695,7 +1714,6 @@ void yyerror(char *s)
 // 			}
 // 		}
 // 		}
-
 
 //   }
 
@@ -1839,7 +1857,6 @@ void yyerror(char *s)
 
 //       }
 
-
 // 			else if(exp->getIDType()=="FUNCTION"){
 // 				if(ter->getVariableDataType()=="INT"){
 // 					if(exp->getFuncRetType()=="INT"){
@@ -1866,8 +1883,6 @@ void yyerror(char *s)
 // 					}
 // 				}
 // 			}
-
-
 
 //     }
 
@@ -1952,7 +1967,6 @@ void yyerror(char *s)
 // 			}
 // 		}
 // 		}
-
 
 //   }
 

@@ -59,14 +59,14 @@
      SEMICOLON = 275,
      PRINTLN = 276,
      ID = 277,
-     CONST_INT = 278,
-     CONST_FLOAT = 279,
-     ADDOP = 280,
-     INCOP = 281,
-     DECOP = 282,
-     MULOP = 283,
-     RELOP = 284,
-     LOGICOP = 285
+     ADDOP = 278,
+     INCOP = 279,
+     DECOP = 280,
+     MULOP = 281,
+     RELOP = 282,
+     LOGICOP = 283,
+     CONST_INT = 284,
+     CONST_FLOAT = 285
    };
 #endif
 /* Tokens.  */
@@ -90,26 +90,27 @@
 #define SEMICOLON 275
 #define PRINTLN 276
 #define ID 277
-#define CONST_INT 278
-#define CONST_FLOAT 279
-#define ADDOP 280
-#define INCOP 281
-#define DECOP 282
-#define MULOP 283
-#define RELOP 284
-#define LOGICOP 285
+#define ADDOP 278
+#define INCOP 279
+#define DECOP 280
+#define MULOP 281
+#define RELOP 282
+#define LOGICOP 283
+#define CONST_INT 284
+#define CONST_FLOAT 285
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 15 "1805047.y"
+#line 18 "1805047.y"
 {
-	symbol_info* symbolvalue;
+	symbol_info* symbolValue;
+	string *input_string;
 }
 /* Line 1529 of yacc.c.  */
-#line 113 "y.tab.h"
+#line 114 "y.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

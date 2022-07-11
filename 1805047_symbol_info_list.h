@@ -97,12 +97,12 @@ public:
         return head;
     }
 
-    void print()
+    void print(FILE* logout)
     {
         symbol_info *temp = head;
         while (temp != nullptr)
         {
-            temp->print();
+            temp->print(logout);
             temp = temp->getNext();
             // cout << " ";
         }

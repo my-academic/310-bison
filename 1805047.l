@@ -12,18 +12,19 @@
 #include<string>
 #include "1805047_symbol_table.h"
 #include "y.tab.h"
-using namespace std;
 
-// extern ofstream logfile, errorfile;
 extern YYSTYPE yylval;
+extern FILE *logout, *errorout;
 extern symbol_table *symbolTable;
+extern void enterNewScope();
 void yyerror(char *);
 
 int line_count=1;
 int start_point = 1;
-int error_count = 0;
+int lexical_error_count = 0;
 string taking_string = "";
-int bucket_size = 7;
+
+using namespace std;
 // symbol_table // symbolTable(bucket_size);
 
 
@@ -86,7 +87,7 @@ void passYYLVAL(string type, string id) {
     if(symbolInfo == nullptr){
         symbolInfo = new symbol_info(id, type);
     }
-    yylval.symbolvalue = symbolInfo;
+    yylval.symbolValue = symbolInfo;
 }
 
 int printInt(string type, char* id){
@@ -102,7 +103,7 @@ int printFloat(string type, char* id){
     return CONST_FLOAT;
 }
 
-void printID(string type, char* id){
+int printID(string type, char* id){
     passYYLVAL(type, id);
     return ID;
 }
@@ -133,6 +134,7 @@ int printKeyword(string type, char* id){
     // transform(up.begin(), up.end(), up.begin(), ::toupper);
     // fprintf(tokenout, "<%s> ", up.c_str());
     // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, up.c_str(), id);
+    yylval.input_string = new string(id);
 
 
     if(up == "if")
@@ -237,8 +239,9 @@ empty_character ['][']
 }
 
 {digit}+            {
-                        return printInt("CONST_INT", yytext);
-
+                        // return printInt("CONST_INT", yytext);
+                        yylval.input_string = new string(yytext);
+                        return CONST_INT;
                     }
 
 {float_number}      {
@@ -262,12 +265,12 @@ empty_character ['][']
 
 
 {addop}             {
+                        yylval.input_string = new string(yytext);
                         return ADDOP;
-                        // printOpAndPunc("ADDOP", yytext);
 }
 
 {incop}          {
-                        // printOpAndPunc("INCOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return INCOP;
 }
 
@@ -276,24 +279,24 @@ empty_character ['][']
                         return DECOP;
 }
 {mulop}            {
-                        // printOpAndPunc("MULOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return MULOP;
 }    
 
 
 {relop}             {
-                        // printOpAndPunc("RELOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return RELOP;
 }
 
 {assignop}             {
-                        // printOpAndPunc("ASSIGNOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return ASSIGNOP;
 }
 
 
 {logicop}             {
-                        // printOpAndPunc("LOGICOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return LOGICOP;
 }
 
@@ -317,11 +320,13 @@ empty_character ['][']
 
 {lcurl}             {
                         // printOpAndPunc("LCURL", yytext);
+                        enterNewScope();
                         return LCURL;
 }
 
 {rcurl}             {
                         // printOpAndPunc("RCURL", yytext);
+                        // symbolTable->exitScope();
                         return RCURL;
 }
 

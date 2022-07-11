@@ -658,18 +658,19 @@ char *yytext;
 #include<string>
 #include "1805047_symbol_table.h"
 #include "y.tab.h"
-using namespace std;
 
-// extern ofstream logfile, errorfile;
 extern YYSTYPE yylval;
+extern FILE *logout, *errorout;
 extern symbol_table *symbolTable;
+extern void enterNewScope();
 void yyerror(char *);
 
 int line_count=1;
 int start_point = 1;
-int error_count = 0;
+int lexical_error_count = 0;
 string taking_string = "";
-int bucket_size = 7;
+
+using namespace std;
 // symbol_table // symbolTable(bucket_size);
 
 
@@ -732,7 +733,7 @@ void passYYLVAL(string type, string id) {
     if(symbolInfo == nullptr){
         symbolInfo = new symbol_info(id, type);
     }
-    yylval.symbolvalue = symbolInfo;
+    yylval.symbolValue = symbolInfo;
 }
 
 int printInt(string type, char* id){
@@ -748,12 +749,9 @@ int printFloat(string type, char* id){
     return CONST_FLOAT;
 }
 
-void printID(string type, char* id){
-    // fprintf(tokenout, "<%s, %s> ",type.c_str(), id);
-    // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, type.c_str(), id);
-    // // bool success = // symbolTable.insert(id, type);
-    // // if(success)
-    // //     // symbolTable.printAllScopeTable();
+int printID(string type, char* id){
+    passYYLVAL(type, id);
+    return ID;
 }
 
 void printString(string type, string str){
@@ -782,6 +780,7 @@ int printKeyword(string type, char* id){
     // transform(up.begin(), up.end(), up.begin(), ::toupper);
     // fprintf(tokenout, "<%s> ", up.c_str());
     // fprintf(logout, "\nLine no %d: Token <%s> Lexeme %s found\n", line_count, up.c_str(), id);
+    yylval.input_string = new string(id);
 
 
     if(up == "if")
@@ -834,8 +833,8 @@ void printCommentLog(){
 }
 
 
+#line 836 "lex.yy.c"
 #line 837 "lex.yy.c"
-#line 838 "lex.yy.c"
 
 #define INITIAL 0
 #define state_string 1
@@ -1055,9 +1054,9 @@ YY_DECL
 		}
 
 	{
-#line 234 "1805047.l"
+#line 233 "1805047.l"
 
-#line 1060 "lex.yy.c"
+#line 1059 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1117,27 +1116,28 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 235 "1805047.l"
+#line 234 "1805047.l"
 {line_count ++;}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 236 "1805047.l"
+#line 235 "1805047.l"
 {}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 238 "1805047.l"
+#line 237 "1805047.l"
 {
                         return printKeyword("keywords", yytext);
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 242 "1805047.l"
+#line 241 "1805047.l"
 {
-                        return printInt("CONST_INT", yytext);
-
+                        // return printInt("CONST_INT", yytext);
+                        yylval.input_string = new string(yytext);
+                        return CONST_INT;
                     }
 	YY_BREAK
 case 5:
@@ -1170,15 +1170,15 @@ case 7:
 YY_RULE_SETUP
 #line 267 "1805047.l"
 {
+                        yylval.input_string = new string(yytext);
                         return ADDOP;
-                        // printOpAndPunc("ADDOP", yytext);
 }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
 #line 272 "1805047.l"
 {
-                        // printOpAndPunc("INCOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return INCOP;
 }
 	YY_BREAK
@@ -1194,7 +1194,7 @@ case 10:
 YY_RULE_SETUP
 #line 281 "1805047.l"
 {
-                        // printOpAndPunc("MULOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return MULOP;
 }    
 	YY_BREAK
@@ -1202,7 +1202,7 @@ case 11:
 YY_RULE_SETUP
 #line 287 "1805047.l"
 {
-                        // printOpAndPunc("RELOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return RELOP;
 }
 	YY_BREAK
@@ -1210,7 +1210,7 @@ case 12:
 YY_RULE_SETUP
 #line 292 "1805047.l"
 {
-                        // printOpAndPunc("ASSIGNOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return ASSIGNOP;
 }
 	YY_BREAK
@@ -1218,7 +1218,7 @@ case 13:
 YY_RULE_SETUP
 #line 298 "1805047.l"
 {
-                        // printOpAndPunc("LOGICOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return LOGICOP;
 }
 	YY_BREAK
@@ -1251,20 +1251,22 @@ YY_RULE_SETUP
 #line 321 "1805047.l"
 {
                         // printOpAndPunc("LCURL", yytext);
+                        enterNewScope();
                         return LCURL;
 }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 326 "1805047.l"
+#line 327 "1805047.l"
 {
                         // printOpAndPunc("RCURL", yytext);
+                        // symbolTable->exitScope();
                         return RCURL;
 }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 332 "1805047.l"
+#line 334 "1805047.l"
 {
                         // printOpAndPunc("LTHIRD", yytext);
                         return LTHIRD;
@@ -1272,7 +1274,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 337 "1805047.l"
+#line 339 "1805047.l"
 {
                         // printOpAndPunc("RTHIRD", yytext);
                         return RTHIRD;
@@ -1280,7 +1282,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 342 "1805047.l"
+#line 344 "1805047.l"
 {
                         // printOpAndPunc("COMMA", yytext);
                         return COMMA;
@@ -1288,7 +1290,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 346 "1805047.l"
+#line 348 "1805047.l"
 {
                         // printOpAndPunc("SEMICOLON", yytext);
                         return SEMICOLON;
@@ -1296,15 +1298,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 351 "1805047.l"
+#line 353 "1805047.l"
 {
-                        // printID("ID", yytext);
-                        return ID;
+                        return printID("ID", yytext);
 }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 357 "1805047.l"
+#line 358 "1805047.l"
 {
                         BEGIN state_string;
                         // printf("starting string state\n");
@@ -1314,7 +1315,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 363 "1805047.l"
+#line 364 "1805047.l"
 {
                         BEGIN INITIAL;
 
@@ -1326,7 +1327,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 372 "1805047.l"
+#line 373 "1805047.l"
 {
                     //    printf("\nhandled\n");
                        taking_string += yytext;
@@ -1335,7 +1336,7 @@ YY_RULE_SETUP
 case 27:
 /* rule 27 can match eol */
 YY_RULE_SETUP
-#line 377 "1805047.l"
+#line 378 "1805047.l"
 {
                     //    printf("\nhandled\n");
                        taking_string += yytext;
@@ -1344,7 +1345,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 383 "1805047.l"
+#line 384 "1805047.l"
 {
                         // cout << "printing " << yytext << " " << (int)yytext[0] << endl;
                         taking_string += yytext;
@@ -1353,7 +1354,7 @@ YY_RULE_SETUP
 case 29:
 /* rule 29 can match eol */
 YY_RULE_SETUP
-#line 387 "1805047.l"
+#line 388 "1805047.l"
 {
                         // cout << "unfinished_string " << yytext << endl;
                         taking_string = "\"" + taking_string;
@@ -1364,7 +1365,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 398 "1805047.l"
+#line 399 "1805047.l"
 {
                         BEGIN state_single_line_comment;
                         taking_string = yytext;
@@ -1375,7 +1376,7 @@ YY_RULE_SETUP
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 405 "1805047.l"
+#line 406 "1805047.l"
 {
                         line_count++;
                         taking_string += yytext;
@@ -1386,7 +1387,7 @@ YY_RULE_SETUP
 case 32:
 /* rule 32 can match eol */
 YY_RULE_SETUP
-#line 412 "1805047.l"
+#line 413 "1805047.l"
 {
                         line_count++;
                         taking_string += yytext;
@@ -1398,7 +1399,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 421 "1805047.l"
+#line 422 "1805047.l"
 {
                         BEGIN state_multi_line_comment;
                         taking_string = yytext;
@@ -1408,7 +1409,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 428 "1805047.l"
+#line 429 "1805047.l"
 {
                         BEGIN INITIAL;
                         taking_string += yytext;
@@ -1419,7 +1420,7 @@ YY_RULE_SETUP
 case 35:
 /* rule 35 can match eol */
 YY_RULE_SETUP
-#line 434 "1805047.l"
+#line 435 "1805047.l"
 {
                         // cout << yytext << endl;
                         taking_string += yytext;
@@ -1429,7 +1430,7 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case YY_STATE_EOF(state_multi_line_comment):
-#line 441 "1805047.l"
+#line 442 "1805047.l"
 {
                         printErrorLog("Unterminated Comment", start_point, taking_string);
                         // cout << "unfinished_comment" << endl;
@@ -1438,7 +1439,7 @@ case YY_STATE_EOF(state_multi_line_comment):
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 447 "1805047.l"
+#line 448 "1805047.l"
 {
                         // cout << yytext << endl;
                         // cout << "Too many decimal points" << endl;
@@ -1447,7 +1448,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 453 "1805047.l"
+#line 454 "1805047.l"
 {
                         // cout << yytext << endl;
                         // cout << "Ill formed number" << endl;
@@ -1456,7 +1457,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 459 "1805047.l"
+#line 460 "1805047.l"
 {
                         // cout << yytext << endl;
                         // cout << "Invalid prefix on ID or invalid suffix on Number" << endl;
@@ -1465,7 +1466,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 466 "1805047.l"
+#line 467 "1805047.l"
 {
                         // cout << yytext << endl;
                         // cout << "Multi character constant error" << endl;
@@ -1475,7 +1476,7 @@ YY_RULE_SETUP
 case 40:
 /* rule 40 can match eol */
 YY_RULE_SETUP
-#line 472 "1805047.l"
+#line 473 "1805047.l"
 {
                         string str = yytext;
                         // cout << line_count << " ";
@@ -1493,7 +1494,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 487 "1805047.l"
+#line 488 "1805047.l"
 {
                         // cout << yytext << endl;
                         // cout << "empty_character" << endl;
@@ -1502,7 +1503,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 493 "1805047.l"
+#line 494 "1805047.l"
 {
                             // cout<< "unrecognized_character" << endl;
                             printErrorLog("Unrecognized character");
@@ -1510,10 +1511,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 499 "1805047.l"
+#line 500 "1805047.l"
 ECHO;
 	YY_BREAK
-#line 1516 "lex.yy.c"
+#line 1517 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(state_string):
 case YY_STATE_EOF(state_single_line_comment):
@@ -2520,7 +2521,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 499 "1805047.l"
+#line 500 "1805047.l"
 
 
 

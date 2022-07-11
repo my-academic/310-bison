@@ -106,18 +106,18 @@ public:
         return true;
     }
 
-    void print()
+    void print(FILE* logout)
     {
-        // fprintf(logout, "\nScopeTable # %s \n", id.c_str());
+        fprintf(logout, "\nScopeTable # %s \n", id.c_str());
         // cout << endl << "ScopeTable # " << id << endl;
         for (size_t i = 0; i < bucketSize; i++)
         {
             if (this->arrayOfSymbolInfoList[i].isEmpty())
                 continue;
-            // fprintf(logout, "%lu --> ", i);
+            fprintf(logout, "%lu --> ", i);
             // cout << i << " -->  ";
-            this->arrayOfSymbolInfoList[i].print();
-            // fprintf(logout, "\n");
+            this->arrayOfSymbolInfoList[i].print(logout);
+            fprintf(logout, "\n");
             // cout << endl;
         }
         // cout << endl;
