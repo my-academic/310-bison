@@ -239,13 +239,13 @@ empty_character ['][']
 }
 
 {digit}+            {
-                        // return printInt("CONST_INT", yytext);
                         yylval.input_string = new string(yytext);
                         return CONST_INT;
                     }
 
 {float_number}      {
-                        return printFloat("CONST_FLOAT", yytext);
+                        yylval.input_string = new string(yytext);
+                        return CONST_FLOAT;
 }
 {const_char}        {
                         // char* str= yytext;

@@ -1135,16 +1135,16 @@ case 4:
 YY_RULE_SETUP
 #line 241 "1805047.l"
 {
-                        // return printInt("CONST_INT", yytext);
                         yylval.input_string = new string(yytext);
                         return CONST_INT;
                     }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 247 "1805047.l"
+#line 246 "1805047.l"
 {
-                        return printFloat("CONST_FLOAT", yytext);
+                        yylval.input_string = new string(yytext);
+                        return CONST_FLOAT;
 }
 	YY_BREAK
 case 6:

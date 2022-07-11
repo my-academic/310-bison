@@ -27,7 +27,10 @@ public:
 
     // array
     int size_of_array;
-    int current_index;
+    int current_index; // -2 for no value and -3 for invalid index
+    string array_type; 
+    vector<int>int_array;
+    vector<float> float_array;
 
     // variable
     string variable_type;

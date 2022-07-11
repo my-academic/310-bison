@@ -116,7 +116,7 @@ parameter_list  : parameter_list COMMA type_specifier ID
 							{
 								string str = stackPop(parameter_list) + "," + stackPop(type_specifier) + " " + $4->getName();
 								stackPush(parameter_list, str);
-								insertIntoParameters($4);
+								insertIntoParameters($4, *$3);
 								printLog("parameter_list", "parameter_list COMMA type_specifier ID", str);
 							}
 		| parameter_list COMMA type_specifier
@@ -125,14 +125,14 @@ parameter_list  : parameter_list COMMA type_specifier ID
 								stackPush(parameter_list, str);
 								string name("#");
 								name = name + to_string(count_of_parameters_without_name++);
-								insertIntoParameters(new symbol_info(name, *$3));
+								insertIntoParameters(new symbol_info(name, "ID"), *$3);
 								printLog("parameter_list", "parameter_list COMMA type_specifier", str);
 							}
  		| type_specifier ID
 							{
 								string str = stackPop(type_specifier) + " " + $2->getName();
 								stackPush(parameter_list, str);
-								insertIntoParameters($2);
+								insertIntoParameters($2, *$1);
 								printLog("parameter_list", "type_specifier ID", str);
 							}
 		| type_specifier
@@ -141,7 +141,7 @@ parameter_list  : parameter_list COMMA type_specifier ID
 								stackPush(parameter_list, str);
 								string name("#");
 								name = name + to_string(count_of_parameters_without_name++);
-								insertIntoParameters(new symbol_info(name, *$1));
+								insertIntoParameters(new symbol_info(name, "ID"), *$1);
 								printLog("parameter_list", "type_specifier", str);
 							}
  		;
@@ -149,7 +149,7 @@ parameter_list  : parameter_list COMMA type_specifier ID
  		
 compound_statement : LCURL statements RCURL 
 							{
-								string str = "{\n\t" + stackPop(statements) + "\n}";
+								string str = "{\n" + stackPop(statements) + "\n}";
 								stackPush(compound_statement, str);
 								printLog("compound_statement", "LCURL statements RCURL", str);
 
@@ -167,7 +167,7 @@ compound_statement : LCURL statements RCURL
  		    
 var_declaration : type_specifier declaration_list SEMICOLON
 							{
-								setVariableValues(*$1);
+								setVariableAndArrayValues(*$1);
 								stackPush(var_declaration, stackPop(type_specifier) + " " + stackPop(declaration_list) + ";");
 								printLog("var_declaration", "type_specifier declaration_list SEMICOLON", *($1) + " " + *$2 + ";");
 							}
@@ -177,13 +177,13 @@ type_specifier	: INT
 							{
 								$$ = new string(yytext);
 								printLog("type_specifier", "INT", yytext);
-								stackPush(type_specifier, "int");
+								stackPush(type_specifier, integer);
 							}
  		| FLOAT
 							{
 								$$ = new string(yytext);
 								printLog("type_specifier", "FLOAT", yytext);
-								stackPush(type_specifier, "float");
+								stackPush(type_specifier, fraction);
 							}
  		| VOID
 							{
@@ -203,7 +203,7 @@ declaration_list : declaration_list COMMA ID
  		  | declaration_list COMMA ID LTHIRD CONST_INT RTHIRD
 							{
 								$$ = new string((*$1) + ","+ $3->getName() + "[" + *$5 + "]");
-								insertDeclarationListRecord($3);
+								insertDeclarationListRecord($3, true, stoi(*$5));
 								stackPush(declaration_list, stackPop(declaration_list) + "," + $3->getName());
 								printLog("declaration_list", "declaration_list COMMA ID LTHIRD CONST_INT RTHIRD", *$$);
 							}
@@ -217,6 +217,7 @@ declaration_list : declaration_list COMMA ID
  		  | ID LTHIRD CONST_INT RTHIRD
 							{
 								$$ = new string($1->getName() + "[" + *$3 + "]");
+								insertDeclarationListRecord($1, true, stoi(*$3));
 								stackPush(declaration_list, *$$);
 								printLog("declaration_list", "ID LTHIRD CONST_INT RTHIRD", *$$);
 							}
@@ -295,12 +296,13 @@ expression_statement 	: SEMICOLON
 	  
 variable : ID 		
 							{
-								$$ = $1;
 								stackPush(variable, $1->getName());
 								printLog("variable", "ID", $1->getName());
 							}
 	 | ID LTHIRD expression RTHIRD 
 							{
+
+								checkArrayIndex($1->getName(), $3);
 								string str = $1->getName() + "["
 								+ stackPop(expression) + "]";
 								stackPush(variable, str);
@@ -319,6 +321,10 @@ expression : logic_expression
 								string str = stackPop(variable) + "=" + stackPop(logic_expression);
 								stackPush(expression, str);
 								printLog("expression", "variable ASSIGNOP logic_expression", str);
+
+								// cout << $1->getName() << " " << $3->getName() << endl;
+								checkCompatibility($1, $3);
+								resetArrayIndex($1);
 							}	
 	   ;
 			
@@ -363,7 +369,7 @@ simple_expression : term
 							}
 		  | simple_expression ADDOP term 
 							{
-								// cout << *$2 << endl;
+								$$ = new symbol_info($1->getName() + " + " + $3->getName(), $1->getType());
 								string str = stackPop(simple_expression) + *$2 + stackPop(term);
 								stackPush(simple_expression, str);
 								printLog("simple_expression", "simple_expression ADDOP term", str);
@@ -378,6 +384,7 @@ term :	unary_expression
 							}
      |  term MULOP unary_expression
 							{
+								checkAndDoMulopThings($1, *$2, $3);
 								string str = stackPop(term) + *$2 + stackPop(unary_expression);
 								stackPush(term, str);
 								printLog("term", "term MULOP unary_expression", str);
@@ -396,7 +403,6 @@ unary_expression : ADDOP unary_expression
 							}
 		 | factor 
 							{
-								$$ = $1;
 								string str = stackPop(factor);
 								stackPush(unary_expression, str);
 								printLog("unary_expression", "factor", str);
@@ -414,6 +420,7 @@ factor	: variable
 								string str = $1->getName() + "(" + stackPop(argument_list) + ")";
 								stackPush(factor, str);
 								printLog("factor", "ID LPAREN argument_list RPAREN", str);
+								checkFunctionArguments($1);
 							}
 	| LPAREN expression RPAREN
 							{
@@ -423,11 +430,13 @@ factor	: variable
 							}
 	| CONST_INT 
 							{
+								$$ = setIntermediateValues("intermediate", integer, stoi(*$1));
 								stackPush(factor, *$1);
 								printLog("factor", "CONST_INT", *$1);
 							}
 	| CONST_FLOAT
 							{
+								$$ = setIntermediateValues("intermediate", "float", stof(*$1));
 								stackPush(factor, *$1);
 								printLog("factor", "CONST_FLOAT", *$1);
 							}
@@ -451,12 +460,14 @@ argument_list : arguments
 	
 arguments : arguments COMMA logic_expression
 							{
+								args.push_back($3);
 								string str = stackPop(arguments) + "," + stackPop(logic_expression);
 								stackPush(arguments, str);
 								printLog("arguments", "arguments COMMA logic_expression", str);
 							}
 	      | logic_expression
 							{
+								args.push_back($1);
 								string str = stackPop(logic_expression);
 								stackPush(arguments, str);
 								printLog("arguments", "logic_expression", str);

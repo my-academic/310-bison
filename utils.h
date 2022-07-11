@@ -10,6 +10,8 @@ extern char *yytext;
 
 // log and error file
 FILE *logout, *errorout;
+string integer = "int";
+string fraction = "float";
 
 // storing variable data type
 string datatype;
@@ -17,14 +19,15 @@ vector<symbol_info *> variables;
 
 // for function parameters
 string return_type;
-vector<symbol_info *> parameters;
+vector<symbol_info*> parameters;
 int count_of_parameters_without_name = 0;
 bool isFunctionStarted = true;
+vector<symbol_info*> args;
 
 // vector<string> paramTypeList;
 // symbol_info *current_function=NULL;
 
-int bucket_size = 7;
+int bucket_size = 31;
 symbol_table *symbolTable = new symbol_table(bucket_size);
 
 string keywordArray[] = {"IF", "ELSE", "FOR", "WHILE", "INT", "FLOAT", "VOID", "RETURN", "PRINTLN"};
@@ -58,6 +61,7 @@ enum non_terminals
 };
 
 vector<stack<string>> non_terminals_stack(50);
+set<int> error_lines;
 
 void yyerror(char *s)
 {
@@ -75,6 +79,19 @@ void printLog(string str1, string str2, string str3)
   fprintf(logout, "Line %d: %s : %s\n%s\n", line_count, str1.c_str(), str2.c_str(), str3.c_str());
 }
 
+void printError(string str1)
+{
+  // cout << line_count << endl;
+  if (!error_lines.count(line_count))
+    fprintf(errorout, "Error at line %d: %s\n", line_count, str1.c_str());
+  error_lines.insert(line_count);
+}
+
+void notDeclaredError(string str1)
+{
+  printError(str1 + " is not declared");
+}
+
 void stackPush(non_terminals nt, string str)
 {
   // cout<<nt<<": "<<str<<endl;
@@ -88,20 +105,36 @@ string stackPop(non_terminals nt)
   return str;
 }
 
-void setVariableRelatedValues(symbol_info *symbolInfo, string type)
+void setVariableAndArrayRelatedValues(symbol_info *symbolInfo, string type, symbol_info *s, int int_value = 0, float float_value = 0)
 {
-  symbolInfo->id_type = VARIABLE;
+  symbolInfo->id_type = s->id_type;
+  symbolInfo->current_index = s->current_index;
+  symbolInfo->size_of_array = s->size_of_array;
   symbolInfo->variable_type = type;
-  symbolInfo->int_value = 0;
-  symbolInfo->float_value = 0;
+  symbolInfo->array_type = type;
+  symbolInfo->int_value = int_value;
+  symbolInfo->float_value = float_value;
+  // cout << symbolInfo->getName() << " " << symbolInfo << endl;
 }
 
-void insertDeclarationListRecord(symbol_info *symbolInfo)
+void insertDeclarationListRecord(symbol_info *symbolInfo, bool is_array = false, int size_of_array = 0)
 {
+  if (is_array)
+  {
+    if (size_of_array <= 0)
+      printError("array size can not be less than 1");
+    symbolInfo->size_of_array = size_of_array;
+    symbolInfo->id_type = ARRAY;
+    symbolInfo->current_index = -2;
+  }
+  else
+  {
+    symbolInfo->id_type = VARIABLE;
+  }
   variables.push_back(symbolInfo);
 }
 
-void setVariableValues(string type)
+void setVariableAndArrayValues(string type)
 {
   for (int i = 0; i < variables.size(); i++)
   {
@@ -112,20 +145,25 @@ void setVariableValues(string type)
     {
       symbolTable->insert(variables[i]->getName(), variables[i]->getType());
       s = symbolTable->lookup(variables[i]->getName());
-      setVariableRelatedValues(s, type);
+      // cout << s << " " << variables[i] << " "<< s->getName() << endl;
+      setVariableAndArrayRelatedValues(s, type, variables[i]);
     }
     else
     {
       // error
-      fprintf(errorout, "line %d : variable error\n", line_count);
+      string err("Multiple declaration of " + s->getName());
+      printError(err);
     }
-    delete variables[i];
+    // delete variables[i];
   }
 
   variables.clear();
 }
 
-void insertIntoParameters(symbol_info* symbolInfo){
+void insertIntoParameters(symbol_info *symbolInfo, string type)
+{
+  symbolInfo->id_type = VARIABLE;
+  symbolInfo->variable_type = type;
   parameters.push_back(symbolInfo);
 }
 
@@ -133,7 +171,8 @@ void setFunctionRelatedValues(symbol_info *symbolInfo, string return_type, bool 
 {
   symbolInfo->return_type = return_type;
   symbolInfo->is_defined = is_defined;
-  for(int i = 0; i < parameters.size(); i++){
+  for (int i = 0; i < parameters.size(); i++)
+  {
     symbolInfo->sequence_of_parameters.push_back(parameters[i]);
   }
   parameters.clear();
@@ -147,9 +186,20 @@ void setFunctionValues(string return_type, symbol_info *symbolInfo, bool is_defi
     symbolTable->insert(symbolInfo->getName(), symbolInfo->getType());
     s = symbolTable->lookup(symbolInfo->getName());
     setFunctionRelatedValues(s, return_type, is_defined);
-  } else if (s->is_defined == false){
-    // todo: match return type & parameters list
-    setFunctionRelatedValues(s, return_type, is_defined);
+  }
+  else if (!s->is_defined && is_defined)
+  {
+    if (s->return_type != return_type)
+      printError("return type does not match with declaration");
+    else
+    {
+      set<string> params;
+      for(int i = 0; i < parameters.size(); i++){
+        if(params.count(parameters[i]->getName())) printError("same name can not be in multiple parameteres");
+        params.insert(parameters[i]->getName());
+      }
+      setFunctionRelatedValues(s, return_type, is_defined);
+    }
   }
   else
   {
@@ -157,10 +207,10 @@ void setFunctionValues(string return_type, symbol_info *symbolInfo, bool is_defi
     fprintf(errorout, "line %d : function error\n", line_count);
   }
   isFunctionStarted = true;
-  delete symbolInfo;
 }
 
-void enterNewScope(){
+void enterNewScope()
+{
   symbolTable->enterScope();
   for (size_t i = 0; isFunctionStarted && i < parameters.size(); i++)
   {
@@ -169,13 +219,112 @@ void enterNewScope(){
   isFunctionStarted = false;
 }
 
-void printTable(){
+void printTable()
+{
   symbolTable->printAllScopeTable(logout);
 }
 
-void exitScope() {
+void exitScope()
+{
   symbolTable->exitScope();
 }
+
+void setArrayRelatedValues(symbol_info *symbolInfo, bool change_index = false, int index_value = -2, bool change_value = false, float value = 0, bool change_size = false, int size = 0)
+{
+  // cout << symbolInfo->current_index << endl;
+  if (change_index)
+  {
+    if (index_value >= symbolInfo->size_of_array)
+      printError("index out of range");
+    else
+      symbolInfo->current_index = index_value;
+  }
+  if (change_value)
+  {
+    if (symbolInfo->array_type == fraction)
+    {
+      symbolInfo->float_array[symbolInfo->current_index] = value;
+    }
+    else
+    {
+      symbolInfo->int_array[symbolInfo->current_index] = int(value);
+    }
+  }
+  if (change_size)
+  {
+    symbolInfo->size_of_array = size;
+  }
+}
+
+void checkArrayIndex(string var_name, symbol_info *idx)
+{
+  if (idx->variable_type == fraction)
+  {
+    printError("Expression inside third brackets not an integer");
+    // symbol_info *s = symbolTable->lookup(var_name);
+    // if(s != nullptr)
+    //   s->current_index = -3; // invalid index
+  }
+  else
+  {
+    symbol_info *s = symbolTable->lookup(var_name);
+    if (s == nullptr)
+      notDeclaredError(var_name);
+    else if (s->id_type != ARRAY)
+      printError(var_name + " is not an array");
+    else
+    {
+      setArrayRelatedValues(s, true, idx->int_value, false, 0);
+    }
+  }
+}
+
+void resetArrayIndex(symbol_info *s)
+{
+  s->current_index = -2;
+}
+
+void checkCompatibility(symbol_info *lhs, symbol_info *rhs)
+{
+  // cout << lhs->variable_type << " " << rhs->variable_type << endl;
+
+  lhs = symbolTable->lookup(lhs->getName());
+  if (lhs != nullptr)
+    cout << lhs->getName() << " " << lhs << " " << lhs->current_index << " " << lhs->array_type << " " << lhs->id_type << endl;
+  // cout << rhs->getName() << " " << rhs << " " << rhs->current_index << " " << rhs->variable_type <<" " << rhs->id_type << endl;
+  if ((lhs != nullptr) && ((lhs->id_type == ARRAY && lhs->current_index != -2 && lhs->array_type != rhs->variable_type) || (lhs->id_type == VARIABLE && lhs->variable_type != rhs->variable_type)))
+  {
+    printError("Type Mismatch");
+  }
+  if (lhs != nullptr && (lhs->id_type == ARRAY && lhs->current_index == -2))
+  {
+    printError("Type Mismatch, " + lhs->getName() + " is an array");
+  }
+}
+
+symbol_info *setIntermediateValues(string symbol_type, string variable_type, float float_value = 0)
+{
+  symbol_info *target = new symbol_info(to_string(float_value), symbol_type);
+  target->variable_type = variable_type;
+  target->float_value = float_value;
+  target->int_value = float_value;
+  return target;
+}
+
+symbol_info *checkAndDoMulopThings(symbol_info *left, string optr, symbol_info *right)
+{
+  if (optr == "%")
+  {
+    if (right->variable_type == fraction || left->variable_type == fraction)
+      printError("Non-Integer operand on modulus operator");
+  }
+  return nullptr;
+}
+
+void checkFunctionArguments(symbol_info* symbolInfo){
+
+}
+
 // void print_error_recovery_mode(string msg){
 //   logfile<<"Error at line "<<line_count<<": "<<msg<<endl<<endl;
 // 	errorfile<<"Error at line "<<line_count<<": "<<msg<<endl<<endl;
