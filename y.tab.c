@@ -504,10 +504,10 @@ static const yytype_uint16 yyrline[] =
        0,    40,    40,    48,    54,    62,    68,    74,    82,    89,
       99,    98,   108,   107,   120,   127,   136,   143,   156,   155,
      168,   167,   179,   187,   193,   199,   207,   214,   221,   228,
-     237,   243,   252,   258,   264,   270,   278,   284,   292,   296,
-     300,   309,   314,   322,   328,   338,   344,   355,   361,   372,
-     378,   389,   396,   405,   411,   421,   427,   431,   439,   445,
-     452,   459,   465,   471,   478,   487,   494,   500,   507
+     237,   243,   252,   258,   264,   270,   278,   284,   292,   298,
+     304,   313,   318,   326,   332,   342,   348,   359,   365,   376,
+     382,   393,   400,   409,   415,   425,   431,   435,   443,   449,
+     456,   463,   469,   475,   482,   491,   498,   504,   511
 };
 #endif
 
@@ -1838,19 +1838,23 @@ yyreduce:
   case 38:
 #line 293 "1805047.y"
     {
-	
+	string str = "while (" + stackPop(expression) + ")" + stackPop(statement);
+	stackPush(statement, str);
+	printLog("statement", "WHILE LPAREN expression RPAREN statement", str);
 }
     break;
 
   case 39:
-#line 297 "1805047.y"
+#line 299 "1805047.y"
     {
-	
+	string str = "printf(" + (yyvsp[(3) - (5)].symbolValue)->getName() + ");";
+	stackPush(statement, str);
+	printLog("statement", "PRINTLN LPAREN ID RPAREN SEMICOLON", str);
 }
     break;
 
   case 40:
-#line 301 "1805047.y"
+#line 305 "1805047.y"
     {
 	checkFuncReturnCompatibility((yyvsp[(2) - (3)].symbolValue));
 	string str = "return " + stackPop(expression) + ";";
@@ -1860,7 +1864,7 @@ yyreduce:
     break;
 
   case 41:
-#line 310 "1805047.y"
+#line 314 "1805047.y"
     {
 	stackPush(expression_statement, ";");
 	printLog("expression_statement", "SEMICOLON", ";");
@@ -1868,7 +1872,7 @@ yyreduce:
     break;
 
   case 42:
-#line 315 "1805047.y"
+#line 319 "1805047.y"
     {
 	string str = stackPop(expression) + ";";
 	stackPush(expression_statement, str);
@@ -1877,7 +1881,7 @@ yyreduce:
     break;
 
   case 43:
-#line 323 "1805047.y"
+#line 327 "1805047.y"
     {
 	(yyval.symbolValue) = findSymbol((yyvsp[(1) - (1)].symbolValue));
 	stackPush(variable, (yyvsp[(1) - (1)].symbolValue)->getName());
@@ -1886,7 +1890,7 @@ yyreduce:
     break;
 
   case 44:
-#line 329 "1805047.y"
+#line 333 "1805047.y"
     {
 	(yyval.symbolValue) = checkArrayIndex((yyvsp[(1) - (4)].symbolValue)->getName(), (yyvsp[(3) - (4)].symbolValue));
 	string str = (yyvsp[(1) - (4)].symbolValue)->getName() + "["
@@ -1897,7 +1901,7 @@ yyreduce:
     break;
 
   case 45:
-#line 339 "1805047.y"
+#line 343 "1805047.y"
     {
 	string str = stackPop(logic_expression);
 	stackPush(expression, str);
@@ -1906,7 +1910,7 @@ yyreduce:
     break;
 
   case 46:
-#line 345 "1805047.y"
+#line 349 "1805047.y"
     {
 	string str = stackPop(variable) + "=" + stackPop(logic_expression);
 	stackPush(expression, str);
@@ -1918,7 +1922,7 @@ yyreduce:
     break;
 
   case 47:
-#line 356 "1805047.y"
+#line 360 "1805047.y"
     {
 	string str = stackPop(rel_expression);
 	stackPush(logic_expression, str);
@@ -1927,7 +1931,7 @@ yyreduce:
     break;
 
   case 48:
-#line 362 "1805047.y"
+#line 366 "1805047.y"
     {
 	(yyval.symbolValue) = checkLogicCompetibility((yyvsp[(1) - (3)].symbolValue), *(yyvsp[(2) - (3)].input_string), (yyvsp[(3) - (3)].symbolValue));
 	string str1 = stackPop(rel_expression);
@@ -1939,7 +1943,7 @@ yyreduce:
     break;
 
   case 49:
-#line 373 "1805047.y"
+#line 377 "1805047.y"
     {
 	string str = stackPop(simple_expression);
 	stackPush(rel_expression, str);
@@ -1948,7 +1952,7 @@ yyreduce:
     break;
 
   case 50:
-#line 379 "1805047.y"
+#line 383 "1805047.y"
     {
 	(yyval.symbolValue) = checkRELOPCompetibility((yyvsp[(1) - (3)].symbolValue), *(yyvsp[(2) - (3)].input_string), (yyvsp[(3) - (3)].symbolValue));
 	string str1 = stackPop(simple_expression);
@@ -1960,7 +1964,7 @@ yyreduce:
     break;
 
   case 51:
-#line 390 "1805047.y"
+#line 394 "1805047.y"
     {
 	(yyval.symbolValue) = (yyvsp[(1) - (1)].symbolValue);
 	string str = stackPop(term);
@@ -1970,7 +1974,7 @@ yyreduce:
     break;
 
   case 52:
-#line 397 "1805047.y"
+#line 401 "1805047.y"
     {
 	(yyval.symbolValue) = checkAdditionCompatibility((yyvsp[(1) - (3)].symbolValue), *(yyvsp[(2) - (3)].input_string), (yyvsp[(3) - (3)].symbolValue));
 	string str = stackPop(simple_expression) + *(yyvsp[(2) - (3)].input_string) + stackPop(term);
@@ -1980,7 +1984,7 @@ yyreduce:
     break;
 
   case 53:
-#line 406 "1805047.y"
+#line 410 "1805047.y"
     {
 	string str = stackPop(unary_expression);
 	stackPush(term, str);
@@ -1989,7 +1993,7 @@ yyreduce:
     break;
 
   case 54:
-#line 412 "1805047.y"
+#line 416 "1805047.y"
     {
 
 	(yyval.symbolValue) = checkAndDoMulopThings((yyvsp[(1) - (3)].symbolValue), *(yyvsp[(2) - (3)].input_string), (yyvsp[(3) - (3)].symbolValue));
@@ -2000,7 +2004,7 @@ yyreduce:
     break;
 
   case 55:
-#line 422 "1805047.y"
+#line 426 "1805047.y"
     {
 	// string str = *$1 + stackPop(unary_expression);
 	// stackPush(unary_expression, str);
@@ -2009,14 +2013,14 @@ yyreduce:
     break;
 
   case 56:
-#line 428 "1805047.y"
+#line 432 "1805047.y"
     {
 	
 }
     break;
 
   case 57:
-#line 432 "1805047.y"
+#line 436 "1805047.y"
     {
 	string str = stackPop(factor);
 	stackPush(unary_expression, str);
@@ -2025,7 +2029,7 @@ yyreduce:
     break;
 
   case 58:
-#line 440 "1805047.y"
+#line 444 "1805047.y"
     {
 	string str = stackPop(variable);
 	stackPush(factor, str);
@@ -2034,7 +2038,7 @@ yyreduce:
     break;
 
   case 59:
-#line 446 "1805047.y"
+#line 450 "1805047.y"
     {
 	string str = (yyvsp[(1) - (4)].symbolValue)->getName() + "(" + stackPop(argument_list) + ")";
 	stackPush(factor, str);
@@ -2044,7 +2048,7 @@ yyreduce:
     break;
 
   case 60:
-#line 453 "1805047.y"
+#line 457 "1805047.y"
     {
 	// todo : $$ = some thing;
 	string str = "(" + stackPop(expression) + ")";
@@ -2054,7 +2058,7 @@ yyreduce:
     break;
 
   case 61:
-#line 460 "1805047.y"
+#line 464 "1805047.y"
     {
 	(yyval.symbolValue) = setIntermediateValues("intermediate", integer, stoi(*(yyvsp[(1) - (1)].input_string)));
 	stackPush(factor, *(yyvsp[(1) - (1)].input_string));
@@ -2063,7 +2067,7 @@ yyreduce:
     break;
 
   case 62:
-#line 466 "1805047.y"
+#line 470 "1805047.y"
     {
 	(yyval.symbolValue) = setIntermediateValues("intermediate", "float", stof(*(yyvsp[(1) - (1)].input_string)));
 	stackPush(factor, *(yyvsp[(1) - (1)].input_string));
@@ -2072,7 +2076,7 @@ yyreduce:
     break;
 
   case 63:
-#line 472 "1805047.y"
+#line 476 "1805047.y"
     {
 	(yyval.symbolValue) = checkINCOPCompatibility((yyvsp[(1) - (2)].symbolValue));
 	string str = stackPop(variable) + "++";
@@ -2082,7 +2086,7 @@ yyreduce:
     break;
 
   case 64:
-#line 479 "1805047.y"
+#line 483 "1805047.y"
     {
 	(yyval.symbolValue) = checkDECOPCompatibility((yyvsp[(1) - (2)].symbolValue));
 	string str = stackPop(variable) + "--";
@@ -2092,7 +2096,7 @@ yyreduce:
     break;
 
   case 65:
-#line 488 "1805047.y"
+#line 492 "1805047.y"
     {
 	string str = stackPop(arguments);
 	stackPush(argument_list, str);
@@ -2101,7 +2105,7 @@ yyreduce:
     break;
 
   case 66:
-#line 494 "1805047.y"
+#line 498 "1805047.y"
     {
 	stackPush(argument_list, "");
 	printLog("argument_list", "", "");
@@ -2109,7 +2113,7 @@ yyreduce:
     break;
 
   case 67:
-#line 501 "1805047.y"
+#line 505 "1805047.y"
     {
 	args.push_back((yyvsp[(3) - (3)].symbolValue));
 	string str = stackPop(arguments) + "," + stackPop(logic_expression);
@@ -2119,7 +2123,7 @@ yyreduce:
     break;
 
   case 68:
-#line 508 "1805047.y"
+#line 512 "1805047.y"
     {
 	args.push_back((yyvsp[(1) - (1)].symbolValue));
 	string str = stackPop(logic_expression);
@@ -2130,7 +2134,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 2134 "y.tab.c"
+#line 2138 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2344,7 +2348,7 @@ yyreturn:
 }
 
 
-#line 517 "1805047.y"
+#line 521 "1805047.y"
 
 int main(int argc,char *argv[])
 {

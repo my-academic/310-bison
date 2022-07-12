@@ -1,0 +1,5 @@
+Error at line 7: same name can not be in multiple parameteres
+Error at line 25: size mismatch
+Error at line 35: Type Mismatch
+Error at line 38: Type Mismatch
+Error at line 41: Type Mismatch

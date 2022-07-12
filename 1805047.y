@@ -291,11 +291,15 @@ statement : var_declaration
 }
 	  | WHILE LPAREN expression RPAREN statement
 {
-	
+	string str = "while (" + stackPop(expression) + ")" + stackPop(statement);
+	stackPush(statement, str);
+	printLog("statement", "WHILE LPAREN expression RPAREN statement", str);
 }
 	  | PRINTLN LPAREN ID RPAREN SEMICOLON
 {
-	
+	string str = "printf(" + $3->getName() + ");";
+	stackPush(statement, str);
+	printLog("statement", "PRINTLN LPAREN ID RPAREN SEMICOLON", str);
 }
 	  | RETURN expression SEMICOLON
 {
