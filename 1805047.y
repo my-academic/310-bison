@@ -269,7 +269,11 @@ statement : var_declaration
 }
 	  | FOR LPAREN expression_statement expression_statement expression RPAREN statement
 {
-	// string str = "for(" + stackPop(expression_statement) + 	
+	string str1 = stackPop(expression_statement);
+	string str2 = stackPop(expression_statement);
+	string str = "for(" + str2 + str1 + stackPop(expression) + ")" + stackPop(statement);
+	stackPush(statement, str);
+	printLog("statement", "FOR LPAREN expression_statement expression_statement expression RPAREN statement", str);
 }
 	  | IF LPAREN expression RPAREN statement %prec LOWER_THAN_ELSE
 {
@@ -447,6 +451,7 @@ factor	: variable
 }
 	| LPAREN expression RPAREN
 {
+	// todo : $$ = some thing;
 	string str = "(" + stackPop(expression) + ")";
 	stackPush(factor, str);
 	printLog("factor", "LPAREN expression RPAREN", str);
@@ -465,11 +470,17 @@ factor	: variable
 }
 	| variable INCOP 
 {
-	
+	$$ = checkINCOPCompatibility($1);
+	string str = stackPop(variable) + "++";
+	stackPush(factor, str);
+	printLog("factor", "variable INCOP", str);
 }
 	| variable DECOP
 {
-	
+	$$ = checkDECOPCompatibility($1);
+	string str = stackPop(variable) + "--";
+	stackPush(factor, str);
+	printLog("factor", "variable DECOP", str);
 }
 	;
 	

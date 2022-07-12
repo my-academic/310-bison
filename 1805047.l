@@ -275,7 +275,7 @@ empty_character ['][']
 }
 
 {decop}          {
-                        // printOpAndPunc("DECOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return DECOP;
 }
 {mulop}            {

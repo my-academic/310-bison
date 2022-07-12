@@ -1186,7 +1186,7 @@ case 9:
 YY_RULE_SETUP
 #line 277 "1805047.l"
 {
-                        // printOpAndPunc("DECOP", yytext);
+                        yylval.input_string = new string(yytext);
                         return DECOP;
 }
 	YY_BREAK

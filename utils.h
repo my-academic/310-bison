@@ -150,6 +150,51 @@ bool checkVoid(symbol_info *s1, symbol_info *s2, string str)
   return false;
 }
 
+bool checkFunction(symbol_info *s1, symbol_info *s2, string str)
+{
+  if (s1->id_type == FUNCTION || s2->id_type == FUNCTION)
+  {
+    printError("type FUNCTION can not be an operand of " + str);
+    return true;
+  }
+  return false;
+}
+
+bool checkNull(symbol_info *s1)
+{
+  return s1 == nullptr ;
+}
+
+bool checkArray(symbol_info *s1, string str)
+{
+  if (s1->id_type == ARRAY )
+  {
+    printError("type ARRAY can not be an operand of " + str);
+    return true;
+  }
+  return false;
+}
+
+bool checkVoid(symbol_info *s1, string str)
+{
+  if (s1->variable_type == _void)
+  {
+    printError("type VOID can not be an operand of " + str);
+    return true;
+  }
+  return false;
+}
+
+bool checkFunction(symbol_info *s1, string str)
+{
+  if (s1->id_type == FUNCTION)
+  {
+    printError("type FUNCTION can not be an operand of " + str);
+    return true;
+  }
+  return false;
+}
+
 symbol_info *findSymbol(symbol_info *symbolInfo)
 {
   symbol_info *s = symbolTable->lookup(symbolInfo->getName());
@@ -572,6 +617,27 @@ void checkFuncReturnCompatibility(symbol_info *symbolInfo)
     printError("return value does not match");
   }
 }
+
+symbol_info* checkINDECopCompatibility(symbol_info* symbolInfo, string optr){
+  if(checkNull(symbolInfo)) return nullptr;
+  if(checkFunction(symbolInfo, optr)) return nullptr;
+  if(checkArray(symbolInfo, optr)) return nullptr;
+  if(checkVoid(symbolInfo, optr)) return nullptr;
+
+  symbol_info* s = new symbol_info(symbolInfo->getName()+ optr, intermediate);
+  s->id_type = VARIABLE;
+  s->variable_type = symbolInfo->variable_type;
+  return s;
+}
+
+symbol_info* checkINCOPCompatibility(symbol_info* symbolInfo){
+  return checkINDECopCompatibility(symbolInfo, "++");
+}
+
+symbol_info* checkDECOPCompatibility(symbol_info* symbolInfo){
+  return checkINDECopCompatibility(symbolInfo, "--");
+}
+
 // void print_error_recovery_mode(string msg){
 //   logfile<<"Error at line "<<line_count<<": "<<msg<<endl<<endl;
 // 	errorfile<<"Error at line "<<line_count<<": "<<msg<<endl<<endl;
