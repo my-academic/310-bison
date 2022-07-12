@@ -12,6 +12,8 @@ extern char *yytext;
 FILE *logout, *errorout;
 string integer = "int";
 string fraction = "float";
+string _void = "void";
+string intermediate = "intermediate";
 
 // storing variable data type
 string datatype;
@@ -19,10 +21,12 @@ vector<symbol_info *> variables;
 
 // for function parameters
 string return_type;
-vector<symbol_info*> parameters;
+vector<symbol_info *> parameters;
 int count_of_parameters_without_name = 0;
 bool isFunctionStarted = true;
-vector<symbol_info*> args;
+vector<symbol_info *> args;
+
+symbol_info *current_function = nullptr;
 
 // vector<string> paramTypeList;
 // symbol_info *current_function=NULL;
@@ -63,6 +67,28 @@ enum non_terminals
 vector<stack<string>> non_terminals_stack(50);
 set<int> error_lines;
 
+void printCompatibilityRelatedThings(symbol_info *s)
+{
+  if (s == nullptr)
+    return;
+  cout << s->getName() << ", id_type: " << s->id_type << ", variable_type: " << s->variable_type << ", array_type: " << s->array_type << ", current_index: " << s->current_index << ", return_type: " << s->return_type << endl
+       << endl;
+  ;
+}
+
+void setCompatibleRelatedThings(symbol_info *s1, symbol_info *s2)
+{
+  s1->id_type = s2->id_type;
+  s1->variable_type = s2->variable_type;
+  s1->array_type = s2->array_type;
+  s1->current_index = s2->current_index;
+}
+
+bool checkCompatibility(symbol_info *s1, symbol_info *s2)
+{
+  return s1->variable_type == s2->variable_type;
+}
+
 void yyerror(char *s)
 {
   // fprintf(stderr,"%s\n",s);
@@ -96,6 +122,39 @@ void stackPush(non_terminals nt, string str)
 {
   // cout<<nt<<": "<<str<<endl;
   non_terminals_stack[nt].push(str);
+}
+
+bool checkNull(symbol_info *s1, symbol_info *s2)
+{
+  return s1 == nullptr || s2 == nullptr;
+}
+
+bool checkArray(symbol_info *s1, symbol_info *s2, string str)
+{
+  if (s1->id_type == ARRAY || s2->id_type == ARRAY)
+  {
+    printError("type ARRAY can not be an operand of " + str);
+    return true;
+  }
+  return false;
+}
+
+bool checkVoid(symbol_info *s1, symbol_info *s2, string str)
+{
+  if (s1->variable_type == _void || s2->variable_type == _void)
+  {
+    printError("type VOID can not be an operand of " + str);
+    return true;
+  }
+  return false;
+}
+
+symbol_info *findSymbol(symbol_info *symbolInfo)
+{
+  symbol_info *s = symbolTable->lookup(symbolInfo->getName());
+  if (s == nullptr)
+    printError("Undeclared variable " + symbolInfo->getName());
+  return s;
 }
 
 string stackPop(non_terminals nt)
@@ -139,8 +198,9 @@ void setVariableAndArrayValues(string type)
   for (int i = 0; i < variables.size(); i++)
   {
     // setVariableRelatedValues(variables[i], type);
-    symbol_info *s = symbolTable->lookup(variables[i]->getName());
-    // cout << variables[i] -> getName() << endl;
+    symbol_info *s = symbolTable->lookupCurrentScope(variables[i]->getName());
+    // cout << "checking " ;
+    // printCompatibilityRelatedThings(s);
     if (s == nullptr)
     {
       symbolTable->insert(variables[i]->getName(), variables[i]->getType());
@@ -150,7 +210,6 @@ void setVariableAndArrayValues(string type)
     }
     else
     {
-      // error
       string err("Multiple declaration of " + s->getName());
       printError(err);
     }
@@ -164,18 +223,62 @@ void insertIntoParameters(symbol_info *symbolInfo, string type)
 {
   symbolInfo->id_type = VARIABLE;
   symbolInfo->variable_type = type;
+  symbolInfo->array_type = type;
   parameters.push_back(symbolInfo);
+  // cout << " "
+  // cout << "in parameters ";
+  // printCompatibilityRelatedThings(symbolInfo);
+}
+
+void setFunctionParameters()
+{
+  // symbolTable->printAllScopeTable();
+  for (int i = 0; i < parameters.size(); i++)
+  {
+    // auto s = symbolTable->lookup(parameters[i]->getName());
+    // cout << "checking " << parameters[i]->getName() << " ";
+    // printCompatibilityRelatedThings(s);
+    // cout << "here" << endl;
+    // printCompatibilityRelatedThings(parameters[i]);
+
+    // setCompatibleRelatedThings(s, parameters[i]);
+    current_function->sequence_of_parameters.push_back(parameters[i]);
+  }
 }
 
 void setFunctionRelatedValues(symbol_info *symbolInfo, string return_type, bool is_defined)
 {
-  symbolInfo->return_type = return_type;
-  symbolInfo->is_defined = is_defined;
+  // symbolTable->printAllScopeTable();
   for (int i = 0; i < parameters.size(); i++)
   {
-    symbolInfo->sequence_of_parameters.push_back(parameters[i]);
+    // auto s = symbolTable->lookup(parameters[i]->getName());
+    // cout << "checking " << parameters[i]->getName() << " ";
+    // printCompatibilityRelatedThings(s);
+    // cout << "here" << endl;
+    // printCompatibilityRelatedThings(parameters[i]);
+
+    // setCompatibleRelatedThings(s, parameters[i]);
+    // symbolInfo->sequence_of_parameters.push_back(s);
   }
-  parameters.clear();
+}
+
+void checkFunctionParameters(string return_type, symbol_info *symbolInfo, bool is_defined)
+{
+  symbol_info *s = symbolTable->lookup(symbolInfo->getName());
+  set<string> params;
+  for (int i = 0; i < parameters.size(); i++)
+  {
+    if (params.count(parameters[i]->getName()))
+      printError("same name can not be in multiple parameteres");
+    params.insert(parameters[i]->getName());
+  }
+  // setFunctionRelatedValues(s, return_type, is_defined);
+
+  s->id_type = FUNCTION;
+  s->return_type = return_type;
+  s->is_defined = is_defined;
+  current_function = s;
+  // printCompatibilityRelatedThings(s);
 }
 
 void setFunctionValues(string return_type, symbol_info *symbolInfo, bool is_defined)
@@ -184,8 +287,7 @@ void setFunctionValues(string return_type, symbol_info *symbolInfo, bool is_defi
   if (s == nullptr)
   {
     symbolTable->insert(symbolInfo->getName(), symbolInfo->getType());
-    s = symbolTable->lookup(symbolInfo->getName());
-    setFunctionRelatedValues(s, return_type, is_defined);
+    checkFunctionParameters(return_type, symbolInfo, is_defined);
   }
   else if (!s->is_defined && is_defined)
   {
@@ -193,12 +295,7 @@ void setFunctionValues(string return_type, symbol_info *symbolInfo, bool is_defi
       printError("return type does not match with declaration");
     else
     {
-      set<string> params;
-      for(int i = 0; i < parameters.size(); i++){
-        if(params.count(parameters[i]->getName())) printError("same name can not be in multiple parameteres");
-        params.insert(parameters[i]->getName());
-      }
-      setFunctionRelatedValues(s, return_type, is_defined);
+      checkFunctionParameters(return_type, symbolInfo, is_defined);
     }
   }
   else
@@ -214,9 +311,18 @@ void enterNewScope()
   symbolTable->enterScope();
   for (size_t i = 0; isFunctionStarted && i < parameters.size(); i++)
   {
+
     symbolTable->insert(parameters[i]->getName(), parameters[i]->getType());
+    symbol_info *s = symbolTable->lookup(parameters[i]->getName());
+    setCompatibleRelatedThings(s, parameters[i]);
   }
+
+  setFunctionParameters();
+
+  parameters.clear();
   isFunctionStarted = false;
+
+  // symbolTable->printAllScopeTable();
 }
 
 void printTable()
@@ -226,6 +332,7 @@ void printTable()
 
 void exitScope()
 {
+  // symbolTable->printAllScopeTable();
   symbolTable->exitScope();
 }
 
@@ -256,14 +363,13 @@ void setArrayRelatedValues(symbol_info *symbolInfo, bool change_index = false, i
   }
 }
 
-void checkArrayIndex(string var_name, symbol_info *idx)
+symbol_info *checkArrayIndex(string var_name, symbol_info *idx)
 {
+  // cout <<
   if (idx->variable_type == fraction)
   {
     printError("Expression inside third brackets not an integer");
-    // symbol_info *s = symbolTable->lookup(var_name);
-    // if(s != nullptr)
-    //   s->current_index = -3; // invalid index
+    return nullptr;
   }
   else
   {
@@ -275,31 +381,44 @@ void checkArrayIndex(string var_name, symbol_info *idx)
     else
     {
       setArrayRelatedValues(s, true, idx->int_value, false, 0);
+      symbol_info *t = new symbol_info(var_name + "[" + idx->getName() + "]", intermediate);
+      t->id_type = VARIABLE;
+      t->variable_type = s->array_type;
+
+      return t;
     }
   }
+  return nullptr;
 }
 
 void resetArrayIndex(symbol_info *s)
 {
+  // cout << line_count << endl;
+  if (s == nullptr)
+    return;
   s->current_index = -2;
 }
 
-void checkCompatibility(symbol_info *lhs, symbol_info *rhs)
+symbol_info *checkAssignCompatibility(symbol_info *lhs, symbol_info *rhs)
 {
-  // cout << lhs->variable_type << " " << rhs->variable_type << endl;
-
-  lhs = symbolTable->lookup(lhs->getName());
-  if (lhs != nullptr)
-    cout << lhs->getName() << " " << lhs << " " << lhs->current_index << " " << lhs->array_type << " " << lhs->id_type << endl;
-  // cout << rhs->getName() << " " << rhs << " " << rhs->current_index << " " << rhs->variable_type <<" " << rhs->id_type << endl;
-  if ((lhs != nullptr) && ((lhs->id_type == ARRAY && lhs->current_index != -2 && lhs->array_type != rhs->variable_type) || (lhs->id_type == VARIABLE && lhs->variable_type != rhs->variable_type)))
+  // cout << "++" << endl;
+  // printCompatibilityRelatedThings(lhs);
+  // cout<< "--" << endl;
+  // printCompatibilityRelatedThings(rhs);
+  // cout << ".." << endl;
+  if (lhs == nullptr || rhs == nullptr)
+  {
+  }
+  else if ((lhs->id_type == ARRAY && lhs->current_index != -2 && lhs->array_type != rhs->variable_type) || (lhs->id_type == VARIABLE && lhs->variable_type != rhs->variable_type))
   {
     printError("Type Mismatch");
   }
-  if (lhs != nullptr && (lhs->id_type == ARRAY && lhs->current_index == -2))
+  else if (lhs->id_type == ARRAY && lhs->current_index == -2)
   {
     printError("Type Mismatch, " + lhs->getName() + " is an array");
   }
+  // printCompatibilityRelatedThings(lhs);
+  return lhs;
 }
 
 symbol_info *setIntermediateValues(string symbol_type, string variable_type, float float_value = 0)
@@ -313,18 +432,145 @@ symbol_info *setIntermediateValues(string symbol_type, string variable_type, flo
 
 symbol_info *checkAndDoMulopThings(symbol_info *left, string optr, symbol_info *right)
 {
+
+  if (checkNull(left, right))
+    return nullptr;
+  
+  if (checkArray(left, right, optr))
+    return nullptr;
+
+  if (checkVoid(left, right, optr))
+    return nullptr;
+
   if (optr == "%")
   {
     if (right->variable_type == fraction || left->variable_type == fraction)
+    {
       printError("Non-Integer operand on modulus operator");
+      return nullptr;
+    }
   }
-  return nullptr;
+
+  symbol_info *s = new symbol_info(left->getName() + optr + right->getName(), "intermediate");
+  setCompatibleRelatedThings(s, left->variable_type == fraction ? left : right);
+
+  return s;
 }
 
-void checkFunctionArguments(symbol_info* symbolInfo){
+symbol_info *checkAdditionCompatibility(symbol_info *left, string optr, symbol_info *right)
+{
+  if (checkNull(left, right))
+    return nullptr;
+  // cout << line_count << " ";
+  // printCompatibilityRelatedThings(left);
+  // printCompatibilityRelatedThings(right);
+  if (checkArray(left, right, optr))
+    return nullptr;
 
+  if (checkVoid(left, right, optr))
+    return nullptr;
+
+  symbol_info *s = new symbol_info(left->getName() + optr + right->getName(), "intermediate");
+  setCompatibleRelatedThings(s, left->variable_type == fraction ? left : right);
+  // printCompatibilityRelatedThings(s);
+  return s;
 }
 
+symbol_info *checkRELOPCompetibility(symbol_info *left, string optr, symbol_info *right)
+{
+  if (checkNull(left, right))
+    return nullptr;
+
+  if (checkArray(left, right, optr))
+    return nullptr;
+
+  if (checkVoid(left, right, optr))
+    return nullptr;
+
+  symbol_info *s = new symbol_info(left->getName() + optr + right->getName(), "intermediate");
+  s->id_type = VARIABLE;
+  s->variable_type = integer;
+  return s;
+}
+
+symbol_info *checkLogicCompetibility(symbol_info *left, string optr, symbol_info *right)
+{
+  if (checkNull(left, right))
+    return nullptr;
+
+  if (checkArray(left, right, optr))
+    return nullptr;
+
+  if (checkVoid(left, right, optr))
+    return nullptr;
+
+  symbol_info *s = new symbol_info(left->getName() + optr + right->getName(), "intermediate");
+  s->id_type = VARIABLE;
+  s->variable_type = integer;
+  return s;
+}
+
+symbol_info *checkFunctionArguments(symbol_info *symbolInfo)
+{
+  // cout << line_count << " ";
+  // symbolTable->printAllScopeTable();
+  // printCompatibilityRelatedThings(symbolInfo);
+  symbolInfo = findSymbol(symbolInfo);
+  // printCompatibilityRelatedThings(symbolInfo);
+  // cout << symbolInfo->getName() << " " << symbolInfo->id_type << endl;
+  if (symbolInfo == nullptr)
+    return nullptr;
+  if (symbolInfo->id_type != FUNCTION)
+  {
+    printError("is not function");
+    return nullptr;
+  }
+  // cout << args.size() << " " << symbolInfo->sequence_of_parameters.size() << endl;
+  if (args.size() != symbolInfo->sequence_of_parameters.size())
+  {
+    printError("size mismatch");
+    return nullptr;
+  }
+  string argus = "";
+  for (int i = 0; i < args.size(); i++)
+  {
+    // printCompatibilityRelatedThings(args[i]);
+    // printCompatibilityRelatedThings(symbolInfo->sequence_of_parameters[i]);
+    if (args[i]->id_type == ARRAY)
+    {
+      printError("Type mismatch, " + args[i]->getName() + " is an array");
+      return nullptr;
+    }
+    else if (args[i]->id_type == FUNCTION)
+    {
+      printError("Type mismatch, " + args[i]->getName() + " is an function");
+      return nullptr;
+    }
+
+    if (args[i]->variable_type != symbolInfo->sequence_of_parameters[i]->variable_type)
+    {
+      printError("Type mismatch, " + args[i]->getName() + " is a " + args[i]->variable_type + ", expected " + symbolInfo->sequence_of_parameters[i]->variable_type);
+      // printError("Type mismatch, found " + args[i]->variable_type + ", expected " + symbolInfo->sequence_of_parameters[i]->variable_type);
+      return nullptr;
+    }
+    argus += args[i]->getName() + ",";
+  }
+  // cout << argus << endl;
+  symbol_info *s = new symbol_info(argus, intermediate);
+  s->id_type = VARIABLE;
+  s->variable_type = symbolInfo->return_type;
+  return s;
+}
+
+void checkFuncReturnCompatibility(symbol_info *symbolInfo)
+{
+  // printCompatibilityRelatedThings(symbolInfo);
+  // printCompatibilityRelatedThings(current_function);
+  if (symbolInfo->variable_type != current_function->return_type)
+  {
+    printError("return value does not match");
+  }
+}
 // void print_error_recovery_mode(string msg){
 //   logfile<<"Error at line "<<line_count<<": "<<msg<<endl<<endl;
 // 	errorfile<<"Error at line "<<line_count<<": "<<msg<<endl<<endl;

@@ -123,6 +123,23 @@ public:
         // cout << endl;
     }
 
+    void print()
+    {
+        // fprintf(logout, "\nScopeTable # %s \n", id.c_str());
+        cout << endl << "ScopeTable # " << id << endl;
+        for (size_t i = 0; i < bucketSize; i++)
+        {
+            if (this->arrayOfSymbolInfoList[i].isEmpty())
+                continue;
+            // fprintf(logout, "%lu --> ", i);
+            cout << i << " -->  ";
+            this->arrayOfSymbolInfoList[i].print();
+            // fprintf(logout, "\n");
+            cout << endl;
+        }
+        // cout << endl;
+    }
+
     long getBucketSize() const { return bucketSize; }
 
     scope_table *getParentScope() const { return parentScope; }

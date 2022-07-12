@@ -320,7 +320,8 @@ empty_character ['][']
 
 {lcurl}             {
                         // printOpAndPunc("LCURL", yytext);
-                        enterNewScope();
+                        // enterNewScope();
+                        // cout << "{ found" << endl;
                         return LCURL;
 }
 

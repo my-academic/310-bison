@@ -46,6 +46,9 @@
         "__tree": "c",
         "forward_list": "c",
         "ios": "c",
-        "__split_buffer": "c"
+        "__split_buffer": "c",
+        "iosfwd": "c",
+        "__locale": "c",
+        "stdexcept": "c"
     }
 }

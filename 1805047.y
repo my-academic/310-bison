@@ -95,17 +95,22 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 							}
 		;
 		 
-func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement 
+func_definition : type_specifier ID LPAREN parameter_list RPAREN  
+							{
+								setFunctionValues(*$1, $2, true);
+							} compound_statement 
 							{
 								string str = stackPop(type_specifier) + " " + $2->getName() + "(" + stackPop(parameter_list) + ")" + stackPop(compound_statement);
-								setFunctionValues(*$1, $2, true);
 								stackPush(func_definition, str);
 								printLog("func_definition", "type_specifier ID LPAREN parameter_list RPAREN compound_statement", str);
 							}
-		| type_specifier ID LPAREN RPAREN compound_statement
+		| type_specifier ID LPAREN RPAREN
+							{
+								setFunctionValues(*$1, $2, true);
+							}  compound_statement
 							{
 								string str = stackPop(type_specifier) + " " + $2->getName() + "()" + stackPop(compound_statement);
-								setFunctionValues(*$1, $2, true);
+								// setFunctionValues(*$1, $2, true);
 								stackPush(func_definition, str);
 								printLog("func_definition", "type_specifier ID LPAREN RPAREN compound_statement", str);
 							}
@@ -147,7 +152,10 @@ parameter_list  : parameter_list COMMA type_specifier ID
  		;
 
  		
-compound_statement : LCURL statements RCURL 
+compound_statement : LCURL 
+							{
+								enterNewScope();
+							} statements RCURL 
 							{
 								string str = "{\n" + stackPop(statements) + "\n}";
 								stackPush(compound_statement, str);
@@ -156,7 +164,10 @@ compound_statement : LCURL statements RCURL
 								printTable();
 								exitScope();
 							}
- 		    | LCURL RCURL
+ 		    | LCURL 
+							{
+								enterNewScope();
+							} RCURL
 							{
 								string str = "{}";
 								stackPush(compound_statement, str);
@@ -231,6 +242,7 @@ statements : statement
 							}
 	   | statements statement
 							{
+
 								string str = stackPop(statements) + "\n" + stackPop(statement);
 								stackPush(statements, str);
 								printLog("statements", "statements statement", str);
@@ -275,6 +287,7 @@ statement : var_declaration
 							}
 	  | RETURN expression SEMICOLON
 							{
+								checkFuncReturnCompatibility($2);
 								string str = "return " + stackPop(expression) + ";";
 								stackPush(statement, str);
 								printLog("statement", "RETURN expression SEMICOLON", str);
@@ -296,13 +309,13 @@ expression_statement 	: SEMICOLON
 	  
 variable : ID 		
 							{
+								$$ = findSymbol($1);
 								stackPush(variable, $1->getName());
 								printLog("variable", "ID", $1->getName());
 							}
 	 | ID LTHIRD expression RTHIRD 
 							{
-
-								checkArrayIndex($1->getName(), $3);
+								$$ = checkArrayIndex($1->getName(), $3);
 								string str = $1->getName() + "["
 								+ stackPop(expression) + "]";
 								stackPush(variable, str);
@@ -322,8 +335,7 @@ expression : logic_expression
 								stackPush(expression, str);
 								printLog("expression", "variable ASSIGNOP logic_expression", str);
 
-								// cout << $1->getName() << " " << $3->getName() << endl;
-								checkCompatibility($1, $3);
+								$$ = checkAssignCompatibility($1, $3);
 								resetArrayIndex($1);
 							}	
 	   ;
@@ -336,6 +348,7 @@ logic_expression : rel_expression
 							}
 		 | rel_expression LOGICOP rel_expression 
 							{
+								$$ = checkLogicCompetibility($1, *$2, $3);
 								string str1 = stackPop(rel_expression);
 								string str2 = stackPop(rel_expression);
 								string str = str2 + *$2 + str1;
@@ -352,6 +365,7 @@ rel_expression	: simple_expression
 							}
 		| simple_expression RELOP simple_expression	
 							{
+								$$ = checkRELOPCompetibility($1, *$2, $3);
 								string str1 = stackPop(simple_expression);
 								string str2 = stackPop(simple_expression);
 								string str = str2 + *$2 + str1;
@@ -369,7 +383,7 @@ simple_expression : term
 							}
 		  | simple_expression ADDOP term 
 							{
-								$$ = new symbol_info($1->getName() + " + " + $3->getName(), $1->getType());
+								$$ = checkAdditionCompatibility($1, *$2, $3);
 								string str = stackPop(simple_expression) + *$2 + stackPop(term);
 								stackPush(simple_expression, str);
 								printLog("simple_expression", "simple_expression ADDOP term", str);
@@ -384,7 +398,8 @@ term :	unary_expression
 							}
      |  term MULOP unary_expression
 							{
-								checkAndDoMulopThings($1, *$2, $3);
+
+								$$ = checkAndDoMulopThings($1, *$2, $3);
 								string str = stackPop(term) + *$2 + stackPop(unary_expression);
 								stackPush(term, str);
 								printLog("term", "term MULOP unary_expression", str);
@@ -420,7 +435,7 @@ factor	: variable
 								string str = $1->getName() + "(" + stackPop(argument_list) + ")";
 								stackPush(factor, str);
 								printLog("factor", "ID LPAREN argument_list RPAREN", str);
-								checkFunctionArguments($1);
+								$$ = checkFunctionArguments($1);
 							}
 	| LPAREN expression RPAREN
 							{
@@ -455,6 +470,11 @@ argument_list : arguments
 								string str = stackPop(arguments);
 								stackPush(argument_list, str);
 								printLog("argument_list", "arguments", str);
+							}
+				|			
+							{
+								stackPush(argument_list, "");
+								printLog("argument_list", "", "");
 							}
 			  ;
 	

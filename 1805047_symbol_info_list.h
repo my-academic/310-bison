@@ -110,6 +110,20 @@ public:
         // delete temp;
         return;
     }
+    
+    void print()
+    {
+        symbol_info *temp = head;
+        while (temp != nullptr)
+        {
+            temp->print();
+            temp = temp->getNext();
+            cout << " ";
+        }
+        // temp = nullptr;
+        // delete temp;
+        return;
+    }
 
     pair<int, symbol_info *> search(string key)
     {

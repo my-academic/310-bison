@@ -71,6 +71,26 @@ public:
         // // cout << "Not found" << endl;
         return nullptr;
     }
+
+    symbol_info* lookupCurrentScope(string name) {
+        scope_table *temp = this->scopeTable;
+        do
+        {
+            pair<int, symbol_info *> symbolInfoAndPosition = temp->lookup(name, false);
+            if (symbolInfoAndPosition.second == nullptr)
+            {
+                temp = temp->getParentScope();
+            }
+            else
+            {
+                // // cout << "Found in ScopeTable# " + temp->getId() + " at position " + to_string(scopeTable->call_hash(name)) + ", " + to_string(symbolInfoAndPosition.first) << endl;
+                return symbolInfoAndPosition.second;
+            }
+        } while (temp != nullptr && false);
+        // // cout << "Not found" << endl;
+        return nullptr;
+    } 
+
     void printCurrentScopeTable(FILE* logout)
     {
         this->scopeTable->print(logout);
@@ -82,6 +102,15 @@ public:
         while (temp != nullptr)
         {
             temp->print(logout);
+            temp = temp->getParentScope();
+        }
+    }
+    void printAllScopeTable()
+    {
+        scope_table *temp = this->scopeTable;
+        while (temp != nullptr)
+        {
+            temp->print();
             temp = temp->getParentScope();
         }
     }
