@@ -66,7 +66,8 @@
      RELOP = 282,
      LOGICOP = 283,
      CONST_INT = 284,
-     CONST_FLOAT = 285
+     CONST_FLOAT = 285,
+     LOWER_THAN_ELSE = 286
    };
 #endif
 /* Tokens.  */
@@ -98,6 +99,7 @@
 #define LOGICOP 283
 #define CONST_INT 284
 #define CONST_FLOAT 285
+#define LOWER_THAN_ELSE 286
 
 
 
@@ -110,7 +112,7 @@ typedef union YYSTYPE
 	string *input_string;
 }
 /* Line 1529 of yacc.c.  */
-#line 114 "y.tab.h"
+#line 116 "y.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

@@ -102,6 +102,7 @@ void yyerror(char *s)
 
 void printLog(string str1, string str2, string str3)
 {
+  printf("Line %d: %s : %s\n%s\n", line_count, str1.c_str(), str2.c_str(), str3.c_str());
   fprintf(logout, "Line %d: %s : %s\n%s\n", line_count, str1.c_str(), str2.c_str(), str3.c_str());
 }
 

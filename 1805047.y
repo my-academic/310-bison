@@ -30,468 +30,476 @@ extern FILE *yyin;
 %type <symbolValue> program unit parameter_list func_definition func_declaration compound_statement statements statement  variable logic_expression rel_expression simple_expression term unary_expression factor arguments argument_list expression expression_statement
 
 %type <input_string> type_specifier declaration_list var_declaration 
-/* %left
-%right*/
 
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 
 
 %%
 
 start : program
-							{
-								string str = stackPop(program);
-								stackPush(start, str);
-								printLog("start", "program", str);
-							}
+{
+	string str = stackPop(program);
+	stackPush(start, str);
+	printLog("start", "program", str);
+}
 	;
 
 program : program unit 
-							{
-								string str = stackPop(program) + "\n" + stackPop(unit);
-								stackPush(program, str);
-								printLog("program", "program unit", str);
-							}
+{
+	string str = stackPop(program) + "\n" + stackPop(unit);
+	stackPush(program, str);
+	printLog("program", "program unit", str);
+}
 	| unit
-							{
-								string str = stackPop(unit);
-								stackPush(program, str);
-								printLog("program", "unit", str);
-							}
+{
+	string str = stackPop(unit);
+	stackPush(program, str);
+	printLog("program", "unit", str);
+}
 	;
 	
 unit : var_declaration
-							{
-								string str = stackPop(var_declaration);
-								stackPush(unit, str);
-								printLog("unit", "var_declaration", str);
-							}
+{
+	string str = stackPop(var_declaration);
+	stackPush(unit, str);
+	printLog("unit", "var_declaration", str);
+}
      | func_declaration
-							{
-								string str = stackPop(func_declaration);
-								stackPush(unit, str);
-								printLog("unit", "func_declaration", str);
-							}
+{
+	string str = stackPop(func_declaration);
+	stackPush(unit, str);
+	printLog("unit", "func_declaration", str);
+}
      | func_definition
-							{
-								string str = stackPop(func_definition);
-								stackPush(unit, str);
-								printLog("unit", "func_definition", str);
-							}
+{
+	string str = stackPop(func_definition);
+	stackPush(unit, str);
+	printLog("unit", "func_definition", str);
+}
      ;
      
 func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
-							{
-								string str = stackPop(type_specifier) + $2->getName() + "(" + stackPop(parameter_list) + ");";
-								setFunctionValues(*$1, $2, false);
-								stackPush(func_declaration, str);
-								printLog("func_declaration", "type_specifier ID LPAREN parameter_list RPAREN SEMICOLON", str);
-							}
+{
+	string str = stackPop(type_specifier) + $2->getName() + "(" + stackPop(parameter_list) + ");";
+	setFunctionValues(*$1, $2, false);
+	stackPush(func_declaration, str);
+	printLog("func_declaration", "type_specifier ID LPAREN parameter_list RPAREN SEMICOLON", str);
+}
 		| type_specifier ID LPAREN RPAREN SEMICOLON
-							{
-								string str = stackPop(type_specifier) + " " + $2->getName() + "();";
-								setFunctionValues(*$1, $2, false);
-								stackPush(func_declaration, str);
-								printLog("func_declaration", "type_specifier ID LPAREN RPAREN SEMICOLON", str);
-							}
+{
+	string str = stackPop(type_specifier) + " " + $2->getName() + "();";
+	setFunctionValues(*$1, $2, false);
+	stackPush(func_declaration, str);
+	printLog("func_declaration", "type_specifier ID LPAREN RPAREN SEMICOLON", str);
+}
 		;
 		 
 func_definition : type_specifier ID LPAREN parameter_list RPAREN  
-							{
-								setFunctionValues(*$1, $2, true);
-							} compound_statement 
-							{
-								string str = stackPop(type_specifier) + " " + $2->getName() + "(" + stackPop(parameter_list) + ")" + stackPop(compound_statement);
-								stackPush(func_definition, str);
-								printLog("func_definition", "type_specifier ID LPAREN parameter_list RPAREN compound_statement", str);
-							}
+{
+	setFunctionValues(*$1, $2, true);
+} compound_statement 
+{
+	string str = stackPop(type_specifier) + " " + $2->getName() + "(" + stackPop(parameter_list) + ")" + stackPop(compound_statement);
+	stackPush(func_definition, str);
+	printLog("func_definition", "type_specifier ID LPAREN parameter_list RPAREN compound_statement", str);
+}
 		| type_specifier ID LPAREN RPAREN
-							{
-								setFunctionValues(*$1, $2, true);
-							}  compound_statement
-							{
-								string str = stackPop(type_specifier) + " " + $2->getName() + "()" + stackPop(compound_statement);
-								// setFunctionValues(*$1, $2, true);
-								stackPush(func_definition, str);
-								printLog("func_definition", "type_specifier ID LPAREN RPAREN compound_statement", str);
-							}
+{
+	setFunctionValues(*$1, $2, true);
+}  compound_statement
+{
+	string str = stackPop(type_specifier) + " " + $2->getName() + "()" + stackPop(compound_statement);
+	// setFunctionValues(*$1, $2, true);
+	stackPush(func_definition, str);
+	printLog("func_definition", "type_specifier ID LPAREN RPAREN compound_statement", str);
+}
  		;				
 
 
 parameter_list  : parameter_list COMMA type_specifier ID
-							{
-								string str = stackPop(parameter_list) + "," + stackPop(type_specifier) + " " + $4->getName();
-								stackPush(parameter_list, str);
-								insertIntoParameters($4, *$3);
-								printLog("parameter_list", "parameter_list COMMA type_specifier ID", str);
-							}
+{
+	string str = stackPop(parameter_list) + "," + stackPop(type_specifier) + " " + $4->getName();
+	stackPush(parameter_list, str);
+	insertIntoParameters($4, *$3);
+	printLog("parameter_list", "parameter_list COMMA type_specifier ID", str);
+}
 		| parameter_list COMMA type_specifier
-							{
-								string str = stackPop(parameter_list) + "," + stackPop(type_specifier);
-								stackPush(parameter_list, str);
-								string name("#");
-								name = name + to_string(count_of_parameters_without_name++);
-								insertIntoParameters(new symbol_info(name, "ID"), *$3);
-								printLog("parameter_list", "parameter_list COMMA type_specifier", str);
-							}
+{
+	string str = stackPop(parameter_list) + "," + stackPop(type_specifier);
+	stackPush(parameter_list, str);
+	string name("#");
+	name = name + to_string(count_of_parameters_without_name++);
+	insertIntoParameters(new symbol_info(name, "ID"), *$3);
+	printLog("parameter_list", "parameter_list COMMA type_specifier", str);
+}
  		| type_specifier ID
-							{
-								string str = stackPop(type_specifier) + " " + $2->getName();
-								stackPush(parameter_list, str);
-								insertIntoParameters($2, *$1);
-								printLog("parameter_list", "type_specifier ID", str);
-							}
+{
+	string str = stackPop(type_specifier) + " " + $2->getName();
+	stackPush(parameter_list, str);
+	insertIntoParameters($2, *$1);
+	printLog("parameter_list", "type_specifier ID", str);
+}
 		| type_specifier
-							{
-								string str = stackPop(type_specifier);
-								stackPush(parameter_list, str);
-								string name("#");
-								name = name + to_string(count_of_parameters_without_name++);
-								insertIntoParameters(new symbol_info(name, "ID"), *$1);
-								printLog("parameter_list", "type_specifier", str);
-							}
+{
+	string str = stackPop(type_specifier);
+	stackPush(parameter_list, str);
+	string name("#");
+	name = name + to_string(count_of_parameters_without_name++);
+	insertIntoParameters(new symbol_info(name, "ID"), *$1);
+	printLog("parameter_list", "type_specifier", str);
+}
  		;
 
  		
 compound_statement : LCURL 
-							{
-								enterNewScope();
-							} statements RCURL 
-							{
-								string str = "{\n" + stackPop(statements) + "\n}";
-								stackPush(compound_statement, str);
-								printLog("compound_statement", "LCURL statements RCURL", str);
+{
+	enterNewScope();
+} statements RCURL 
+{
+	string str = "{\n" + stackPop(statements) + "\n}";
+	stackPush(compound_statement, str);
+	printLog("compound_statement", "LCURL statements RCURL", str);
 
-								printTable();
-								exitScope();
-							}
+	printTable();
+	exitScope();
+}
  		    | LCURL 
-							{
-								enterNewScope();
-							} RCURL
-							{
-								string str = "{}";
-								stackPush(compound_statement, str);
-								enterNewScope();
-								printLog("compound_statement", "LCURL RCURL", str);
-							}
+{
+	enterNewScope();
+} RCURL
+{
+	string str = "{}";
+	stackPush(compound_statement, str);
+	enterNewScope();
+	printLog("compound_statement", "LCURL RCURL", str);
+}
  		    ;
  		    
 var_declaration : type_specifier declaration_list SEMICOLON
-							{
-								setVariableAndArrayValues(*$1);
-								stackPush(var_declaration, stackPop(type_specifier) + " " + stackPop(declaration_list) + ";");
-								printLog("var_declaration", "type_specifier declaration_list SEMICOLON", *($1) + " " + *$2 + ";");
-							}
+{
+	setVariableAndArrayValues(*$1);
+	stackPush(var_declaration, stackPop(type_specifier) + " " + stackPop(declaration_list) + ";");
+	printLog("var_declaration", "type_specifier declaration_list SEMICOLON", *($1) + " " + *$2 + ";");
+}
  		 ;
  		 
 type_specifier	: INT
-							{
-								$$ = new string(yytext);
-								printLog("type_specifier", "INT", yytext);
-								stackPush(type_specifier, integer);
-							}
+{
+	$$ = new string(yytext);
+	printLog("type_specifier", "INT", yytext);
+	stackPush(type_specifier, integer);
+}
  		| FLOAT
-							{
-								$$ = new string(yytext);
-								printLog("type_specifier", "FLOAT", yytext);
-								stackPush(type_specifier, fraction);
-							}
+{
+	$$ = new string(yytext);
+	printLog("type_specifier", "FLOAT", yytext);
+	stackPush(type_specifier, fraction);
+}
  		| VOID
-							{
-								$$ = new string(yytext);
-								printLog("type_specifier", "VOID", yytext);
-								stackPush(type_specifier, "void");
-							}
+{
+	$$ = new string(yytext);
+	printLog("type_specifier", "VOID", yytext);
+	stackPush(type_specifier, "void");
+}
  		;
  		
 declaration_list : declaration_list COMMA ID
-							{
-								$$ = new string((*$1) + ","+ $3->getName());
-								insertDeclarationListRecord($3);
-								stackPush(declaration_list, stackPop(declaration_list) + "," + $3->getName());
-								printLog("declaration_list", "declaration_list COMMA ID", *$$);
-							}
+{
+	$$ = new string((*$1) + ","+ $3->getName());
+	insertDeclarationListRecord($3);
+	stackPush(declaration_list, stackPop(declaration_list) + "," + $3->getName());
+	printLog("declaration_list", "declaration_list COMMA ID", *$$);
+}
  		  | declaration_list COMMA ID LTHIRD CONST_INT RTHIRD
-							{
-								$$ = new string((*$1) + ","+ $3->getName() + "[" + *$5 + "]");
-								insertDeclarationListRecord($3, true, stoi(*$5));
-								stackPush(declaration_list, stackPop(declaration_list) + "," + $3->getName());
-								printLog("declaration_list", "declaration_list COMMA ID LTHIRD CONST_INT RTHIRD", *$$);
-							}
+{
+	$$ = new string((*$1) + ","+ $3->getName() + "[" + *$5 + "]");
+	insertDeclarationListRecord($3, true, stoi(*$5));
+	stackPush(declaration_list, stackPop(declaration_list) + "," + $3->getName());
+	printLog("declaration_list", "declaration_list COMMA ID LTHIRD CONST_INT RTHIRD", *$$);
+}
  		  | ID
-							{
-								$$ = new string($1 -> getName());
-								insertDeclarationListRecord($1);
-								stackPush(declaration_list, $1->getName());
-								printLog("declaration_list", "ID", *$$);
-							}
+{
+	$$ = new string($1 -> getName());
+	insertDeclarationListRecord($1);
+	stackPush(declaration_list, $1->getName());
+	printLog("declaration_list", "ID", *$$);
+}
  		  | ID LTHIRD CONST_INT RTHIRD
-							{
-								$$ = new string($1->getName() + "[" + *$3 + "]");
-								insertDeclarationListRecord($1, true, stoi(*$3));
-								stackPush(declaration_list, *$$);
-								printLog("declaration_list", "ID LTHIRD CONST_INT RTHIRD", *$$);
-							}
+{
+	$$ = new string($1->getName() + "[" + *$3 + "]");
+	insertDeclarationListRecord($1, true, stoi(*$3));
+	stackPush(declaration_list, *$$);
+	printLog("declaration_list", "ID LTHIRD CONST_INT RTHIRD", *$$);
+}
  		  ;
  		  
 statements : statement
-							{
-								string str = stackPop(statement);
-								stackPush(statements, str);
-								printLog("statements", "statement", str);
-							}
+{
+	string str = stackPop(statement);
+	stackPush(statements, str);
+	printLog("statements", "statement", str);
+}
 	   | statements statement
-							{
+{
 
-								string str = stackPop(statements) + "\n" + stackPop(statement);
-								stackPush(statements, str);
-								printLog("statements", "statements statement", str);
-							}
+	string str = stackPop(statements) + "\n" + stackPop(statement);
+	stackPush(statements, str);
+	printLog("statements", "statements statement", str);
+}
 	   ;
 	   
 statement : var_declaration
-							{
-								string str =  stackPop(var_declaration);
-								stackPush(statement, str);
-								printLog("statement", "var_declaration", str);
-							}
+{
+	string str =  stackPop(var_declaration);
+	stackPush(statement, str);
+	printLog("statement", "var_declaration", str);
+}
 	  | expression_statement
-							{
-								string str =  stackPop(expression_statement);
-								stackPush(statement, str);
-								printLog("statement", "expression_statement", str);
-							}
+{
+	string str =  stackPop(expression_statement);
+	stackPush(statement, str);
+	printLog("statement", "expression_statement", str);
+}
 	  | compound_statement
-							{
-								
-							}
+{
+	string str =  stackPop(compound_statement);
+	stackPush(statement, str);
+	printLog("statement", "compound_statement", str);
+}
 	  | FOR LPAREN expression_statement expression_statement expression RPAREN statement
-							{
-								
-							}
-	  /* | IF LPAREN expression RPAREN statement
-							{
-								
-							}
+{
+	// string str = "for(" + stackPop(expression_statement) + 	
+}
+	  | IF LPAREN expression RPAREN statement %prec LOWER_THAN_ELSE
+{
+	string str = "if(" + stackPop(expression) + ")" + stackPop(statement);
+	stackPush(statement, str);
+	printLog("statement", "IF LPAREN expression RPAREN statement", str);
+}
 	  | IF LPAREN expression RPAREN statement ELSE statement
-							{
-								
-							} */
+{
+	string str1 = stackPop(statement);
+	string str2 = stackPop(statement);
+	string str = "if (" + stackPop(expression) + ")" + str2 + "\nelse " + str1;
+	stackPush(statement, str);
+	printLog("statement", "IF LPAREN expression RPAREN statement ELSE statement", str);
+}
 	  | WHILE LPAREN expression RPAREN statement
-							{
-								
-							}
+{
+	
+}
 	  | PRINTLN LPAREN ID RPAREN SEMICOLON
-							{
-								
-							}
+{
+	
+}
 	  | RETURN expression SEMICOLON
-							{
-								checkFuncReturnCompatibility($2);
-								string str = "return " + stackPop(expression) + ";";
-								stackPush(statement, str);
-								printLog("statement", "RETURN expression SEMICOLON", str);
-							}
+{
+	checkFuncReturnCompatibility($2);
+	string str = "return " + stackPop(expression) + ";";
+	stackPush(statement, str);
+	printLog("statement", "RETURN expression SEMICOLON", str);
+}
 	  ;
 	  
 expression_statement 	: SEMICOLON	
-							{
-								stackPush(expression_statement, ";");
-								printLog("expression_statement", "SEMICOLON", ";");
-							}		
+{
+	stackPush(expression_statement, ";");
+	printLog("expression_statement", "SEMICOLON", ";");
+}		
 			| expression SEMICOLON 
-							{
-								string str = stackPop(expression) + ";";
-								stackPush(expression_statement, str);
-								printLog("expression_statement", "expression SEMICOLON", str);
-							}
+{
+	string str = stackPop(expression) + ";";
+	stackPush(expression_statement, str);
+	printLog("expression_statement", "expression SEMICOLON", str);
+}
 			;
 	  
 variable : ID 		
-							{
-								$$ = findSymbol($1);
-								stackPush(variable, $1->getName());
-								printLog("variable", "ID", $1->getName());
-							}
+{
+	$$ = findSymbol($1);
+	stackPush(variable, $1->getName());
+	printLog("variable", "ID", $1->getName());
+}
 	 | ID LTHIRD expression RTHIRD 
-							{
-								$$ = checkArrayIndex($1->getName(), $3);
-								string str = $1->getName() + "["
-								+ stackPop(expression) + "]";
-								stackPush(variable, str);
-								printLog("variable", "ID LTHIRD expression RTHIRD ", str);
-							}
+{
+	$$ = checkArrayIndex($1->getName(), $3);
+	string str = $1->getName() + "["
+	+ stackPop(expression) + "]";
+	stackPush(variable, str);
+	printLog("variable", "ID LTHIRD expression RTHIRD ", str);
+}
 	 ;
 	 
 expression : logic_expression	
-							{
-								string str = stackPop(logic_expression);
-								stackPush(expression, str);
-								printLog("expression", "logic_expression", str);
-							}
+{
+	string str = stackPop(logic_expression);
+	stackPush(expression, str);
+	printLog("expression", "logic_expression", str);
+}
 	   | variable ASSIGNOP logic_expression 
-							{
-								string str = stackPop(variable) + "=" + stackPop(logic_expression);
-								stackPush(expression, str);
-								printLog("expression", "variable ASSIGNOP logic_expression", str);
+{
+	string str = stackPop(variable) + "=" + stackPop(logic_expression);
+	stackPush(expression, str);
+	printLog("expression", "variable ASSIGNOP logic_expression", str);
 
-								$$ = checkAssignCompatibility($1, $3);
-								resetArrayIndex($1);
-							}	
+	$$ = checkAssignCompatibility($1, $3);
+	resetArrayIndex($1);
+}	
 	   ;
 			
 logic_expression : rel_expression 	
-							{
-								string str = stackPop(rel_expression);
-								stackPush(logic_expression, str);
-								printLog("logic_expression", "rel_expression", str);
-							}
+{
+	string str = stackPop(rel_expression);
+	stackPush(logic_expression, str);
+	printLog("logic_expression", "rel_expression", str);
+}
 		 | rel_expression LOGICOP rel_expression 
-							{
-								$$ = checkLogicCompetibility($1, *$2, $3);
-								string str1 = stackPop(rel_expression);
-								string str2 = stackPop(rel_expression);
-								string str = str2 + *$2 + str1;
-								stackPush(logic_expression, str);
-								printLog("logic_expression", "rel_expression LOGICOP rel_expression ", str);
-							}	
+{
+	$$ = checkLogicCompetibility($1, *$2, $3);
+	string str1 = stackPop(rel_expression);
+	string str2 = stackPop(rel_expression);
+	string str = str2 + *$2 + str1;
+	stackPush(logic_expression, str);
+	printLog("logic_expression", "rel_expression LOGICOP rel_expression ", str);
+}	
 		 ;
 			
 rel_expression	: simple_expression 
-							{
-								string str = stackPop(simple_expression);
-								stackPush(rel_expression, str);
-								printLog("rel_expression", "simple_expression", str);
-							}
+{
+	string str = stackPop(simple_expression);
+	stackPush(rel_expression, str);
+	printLog("rel_expression", "simple_expression", str);
+}
 		| simple_expression RELOP simple_expression	
-							{
-								$$ = checkRELOPCompetibility($1, *$2, $3);
-								string str1 = stackPop(simple_expression);
-								string str2 = stackPop(simple_expression);
-								string str = str2 + *$2 + str1;
-								stackPush(rel_expression, str);
-								printLog("rel_expression", "simple_expression RELOP simple_expression	", str);
-							}
+{
+	$$ = checkRELOPCompetibility($1, *$2, $3);
+	string str1 = stackPop(simple_expression);
+	string str2 = stackPop(simple_expression);
+	string str = str2 + *$2 + str1;
+	stackPush(rel_expression, str);
+	printLog("rel_expression", "simple_expression RELOP simple_expression	", str);
+}
 		;
 				
 simple_expression : term 
-							{
-								$$ = $1;
-								string str = stackPop(term);
-								stackPush(simple_expression, str);
-								printLog("simple_expression", "term", str);
-							}
+{
+	$$ = $1;
+	string str = stackPop(term);
+	stackPush(simple_expression, str);
+	printLog("simple_expression", "term", str);
+}
 		  | simple_expression ADDOP term 
-							{
-								$$ = checkAdditionCompatibility($1, *$2, $3);
-								string str = stackPop(simple_expression) + *$2 + stackPop(term);
-								stackPush(simple_expression, str);
-								printLog("simple_expression", "simple_expression ADDOP term", str);
-							}
+{
+	$$ = checkAdditionCompatibility($1, *$2, $3);
+	string str = stackPop(simple_expression) + *$2 + stackPop(term);
+	stackPush(simple_expression, str);
+	printLog("simple_expression", "simple_expression ADDOP term", str);
+}
 		  ;
 					
 term :	unary_expression
-							{
-								string str = stackPop(unary_expression);
-								stackPush(term, str);
-								printLog("term", "unary_expression", str);
-							}
+{
+	string str = stackPop(unary_expression);
+	stackPush(term, str);
+	printLog("term", "unary_expression", str);
+}
      |  term MULOP unary_expression
-							{
+{
 
-								$$ = checkAndDoMulopThings($1, *$2, $3);
-								string str = stackPop(term) + *$2 + stackPop(unary_expression);
-								stackPush(term, str);
-								printLog("term", "term MULOP unary_expression", str);
-							}
+	$$ = checkAndDoMulopThings($1, *$2, $3);
+	string str = stackPop(term) + *$2 + stackPop(unary_expression);
+	stackPush(term, str);
+	printLog("term", "term MULOP unary_expression", str);
+}
      ;
 
 unary_expression : ADDOP unary_expression 
-							{
-								// string str = *$1 + stackPop(unary_expression);
-								// stackPush(unary_expression, str);
-								// printLog("unary_expression", "ADDOP unary_expression", str);
-							} 
+{
+	// string str = *$1 + stackPop(unary_expression);
+	// stackPush(unary_expression, str);
+	// printLog("unary_expression", "ADDOP unary_expression", str);
+} 
 		 | NOT unary_expression 
-							{
-								
-							}
+{
+	
+}
 		 | factor 
-							{
-								string str = stackPop(factor);
-								stackPush(unary_expression, str);
-								printLog("unary_expression", "factor", str);
-							}
+{
+	string str = stackPop(factor);
+	stackPush(unary_expression, str);
+	printLog("unary_expression", "factor", str);
+}
 		 ;
 	
 factor	: variable 
-							{
-								string str = stackPop(variable);
-								stackPush(factor, str);
-								printLog("factor", "variable", str);
-							}
+{
+	string str = stackPop(variable);
+	stackPush(factor, str);
+	printLog("factor", "variable", str);
+}
 	| ID LPAREN argument_list RPAREN
-							{
-								string str = $1->getName() + "(" + stackPop(argument_list) + ")";
-								stackPush(factor, str);
-								printLog("factor", "ID LPAREN argument_list RPAREN", str);
-								$$ = checkFunctionArguments($1);
-							}
+{
+	string str = $1->getName() + "(" + stackPop(argument_list) + ")";
+	stackPush(factor, str);
+	printLog("factor", "ID LPAREN argument_list RPAREN", str);
+	$$ = checkFunctionArguments($1);
+}
 	| LPAREN expression RPAREN
-							{
-								string str = "(" + stackPop(expression) + ")";
-								stackPush(factor, str);
-								printLog("factor", "LPAREN expression RPAREN", str);
-							}
+{
+	string str = "(" + stackPop(expression) + ")";
+	stackPush(factor, str);
+	printLog("factor", "LPAREN expression RPAREN", str);
+}
 	| CONST_INT 
-							{
-								$$ = setIntermediateValues("intermediate", integer, stoi(*$1));
-								stackPush(factor, *$1);
-								printLog("factor", "CONST_INT", *$1);
-							}
+{
+	$$ = setIntermediateValues("intermediate", integer, stoi(*$1));
+	stackPush(factor, *$1);
+	printLog("factor", "CONST_INT", *$1);
+}
 	| CONST_FLOAT
-							{
-								$$ = setIntermediateValues("intermediate", "float", stof(*$1));
-								stackPush(factor, *$1);
-								printLog("factor", "CONST_FLOAT", *$1);
-							}
+{
+	$$ = setIntermediateValues("intermediate", "float", stof(*$1));
+	stackPush(factor, *$1);
+	printLog("factor", "CONST_FLOAT", *$1);
+}
 	| variable INCOP 
-							{
-								
-							}
+{
+	
+}
 	| variable DECOP
-							{
-								
-							}
+{
+	
+}
 	;
 	
 argument_list : arguments
-							{
-								string str = stackPop(arguments);
-								stackPush(argument_list, str);
-								printLog("argument_list", "arguments", str);
-							}
+{
+	string str = stackPop(arguments);
+	stackPush(argument_list, str);
+	printLog("argument_list", "arguments", str);
+}
 				|			
-							{
-								stackPush(argument_list, "");
-								printLog("argument_list", "", "");
-							}
+{
+	stackPush(argument_list, "");
+	printLog("argument_list", "", "");
+}
 			  ;
 	
 arguments : arguments COMMA logic_expression
-							{
-								args.push_back($3);
-								string str = stackPop(arguments) + "," + stackPop(logic_expression);
-								stackPush(arguments, str);
-								printLog("arguments", "arguments COMMA logic_expression", str);
-							}
+{
+	args.push_back($3);
+	string str = stackPop(arguments) + "," + stackPop(logic_expression);
+	stackPush(arguments, str);
+	printLog("arguments", "arguments COMMA logic_expression", str);
+}
 	      | logic_expression
-							{
-								args.push_back($1);
-								string str = stackPop(logic_expression);
-								stackPush(arguments, str);
-								printLog("arguments", "logic_expression", str);
-							}
+{
+	args.push_back($1);
+	string str = stackPop(logic_expression);
+	stackPush(arguments, str);
+	printLog("arguments", "logic_expression", str);
+}
 	      ;
  
 
