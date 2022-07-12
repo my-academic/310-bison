@@ -2050,7 +2050,7 @@ yyreduce:
   case 60:
 #line 457 "1805047.y"
     {
-	// todo : $$ = some thing;
+	(yyval.symbolValue) = (yyvsp[(2) - (3)].symbolValue);
 	string str = "(" + stackPop(expression) + ")";
 	stackPush(factor, str);
 	printLog("factor", "LPAREN expression RPAREN", str);

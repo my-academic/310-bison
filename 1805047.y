@@ -455,7 +455,7 @@ factor	: variable
 }
 	| LPAREN expression RPAREN
 {
-	// todo : $$ = some thing;
+	$$ = $2;
 	string str = "(" + stackPop(expression) + ")";
 	stackPush(factor, str);
 	printLog("factor", "LPAREN expression RPAREN", str);
