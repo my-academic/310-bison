@@ -519,18 +519,23 @@ symbol_info *checkAndDoMulopThings(symbol_info *left, string optr, symbol_info *
   }
 
   symbol_info *s = new symbol_info(left->getName() + optr + right->getName(), "intermediate");
-  setCompatibleRelatedThings(s, left->variable_type == fraction ? left : right);
+  s->id_type = VARIABLE;
+  s->variable_type = left->variable_type == fraction || right->variable_type == fraction ? fraction : integer;
+  cout << line_count << endl;
 
   return s;
 }
 
 symbol_info *checkAdditionCompatibility(symbol_info *left, string optr, symbol_info *right)
 {
+  // cout << line_count << endl;
+  // cout << "1++" << endl;
+  // printCompatibilityRelatedThings(left);
+  // cout << "2--" << endl;
+  // printCompatibilityRelatedThings(right);
+  // cout << "3__" << endl;
   if (checkNull(left, right))
     return nullptr;
-  // cout << line_count << " ";
-  // printCompatibilityRelatedThings(left);
-  // printCompatibilityRelatedThings(right);
   if (checkArray(left, right, optr))
     return nullptr;
 
@@ -538,9 +543,8 @@ symbol_info *checkAdditionCompatibility(symbol_info *left, string optr, symbol_i
     return nullptr;
 
   symbol_info *s = new symbol_info(left->getName() + optr + right->getName(), "intermediate");
-  setCompatibleRelatedThings(s, left->variable_type == fraction ? left : right);
-  cout << line_count << endl;
-  printCompatibilityRelatedThings(s);
+  s->id_type = VARIABLE;
+  s->variable_type = left->variable_type == fraction || right->variable_type == fraction ? fraction : integer;
   return s;
 }
 
@@ -613,13 +617,14 @@ symbol_info *checkFunctionArguments(symbol_info *symbolInfo)
       // printError("Type mismatch, found " + args[i]->variable_type + ", expected " + symbolInfo->sequence_of_parameters[i]->variable_type);
       return nullptr;
     }
-    argus += args[i]->getName() + ",";
+    argus += args[i]->getName() + (i == args.size() - 1 ? "" : ",");
   }
   // cout << argus << endl;
   argus += ")";
   symbol_info *s = new symbol_info(argus, intermediate);
   s->id_type = VARIABLE;
   s->variable_type = symbolInfo->return_type;
+  args.clear();
   return s;
 }
 
