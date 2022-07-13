@@ -428,17 +428,17 @@ term :	unary_expression
 
 unary_expression : ADDOP unary_expression 
 {
-	// $$ = checkUnaryADDOPThings($1, $2);
-	// string str = *$1 + stackPop(unary_expression);
-	// stackPush(unary_expression, str);
-	// printLog("unary_expression", "ADDOP unary_expression", str);
+	$$ = checkUnaryADDOPThings(*$1, $2);
+	string str = *$1 + stackPop(unary_expression);
+	stackPush(unary_expression, str);
+	printLog("unary_expression", "ADDOP unary_expression", str);
 } 
 		 | NOT unary_expression 
 {
-	
-	// string str = *$1 + stackPop(unary_expression);
-	// stackPush(unary_expression, str);
-	// printLog("unary_expression", "ADDOP unary_expression", str);
+	$$ = checkNotCompatibility($2);
+	string str = "!" + stackPop(unary_expression);
+	stackPush(unary_expression, str);
+	printLog("unary_expression", "ADDOP unary_expression", str);
 }
 		 | factor 
 {
@@ -463,7 +463,7 @@ factor	: variable
 }
 	| LPAREN expression RPAREN
 {
-	$$ = $2;
+	$$ = checkLPAREN_Expression_RPAREN($2);
 	string str = "(" + stackPop(expression) + ")";
 	stackPush(factor, str);
 	printLog("factor", "LPAREN expression RPAREN", str);

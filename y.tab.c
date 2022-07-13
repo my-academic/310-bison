@@ -2010,20 +2010,20 @@ yyreduce:
   case 55:
 #line 430 "1805047.y"
     {
-	// $$ = checkUnaryADDOPThings($1, $2);
-	// string str = *$1 + stackPop(unary_expression);
-	// stackPush(unary_expression, str);
-	// printLog("unary_expression", "ADDOP unary_expression", str);
+	(yyval.symbolValue) = checkUnaryADDOPThings(*(yyvsp[(1) - (2)].input_string), (yyvsp[(2) - (2)].symbolValue));
+	string str = *(yyvsp[(1) - (2)].input_string) + stackPop(unary_expression);
+	stackPush(unary_expression, str);
+	printLog("unary_expression", "ADDOP unary_expression", str);
 }
     break;
 
   case 56:
 #line 437 "1805047.y"
     {
-	
-	// string str = *$1 + stackPop(unary_expression);
-	// stackPush(unary_expression, str);
-	// printLog("unary_expression", "ADDOP unary_expression", str);
+	(yyval.symbolValue) = checkNotCompatibility((yyvsp[(2) - (2)].symbolValue));
+	string str = "!" + stackPop(unary_expression);
+	stackPush(unary_expression, str);
+	printLog("unary_expression", "ADDOP unary_expression", str);
 }
     break;
 
@@ -2058,7 +2058,7 @@ yyreduce:
   case 60:
 #line 465 "1805047.y"
     {
-	(yyval.symbolValue) = (yyvsp[(2) - (3)].symbolValue);
+	(yyval.symbolValue) = checkLPAREN_Expression_RPAREN((yyvsp[(2) - (3)].symbolValue));
 	string str = "(" + stackPop(expression) + ")";
 	stackPush(factor, str);
 	printLog("factor", "LPAREN expression RPAREN", str);

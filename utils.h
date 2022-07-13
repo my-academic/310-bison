@@ -195,6 +195,16 @@ bool checkFunction(symbol_info *s1, string str)
   return false;
 }
 
+bool checkNullFunctionArrayVoid(symbol_info *symbolInfo, string optr)
+{
+  return checkNull(symbolInfo) || checkFunction(symbolInfo, optr) || checkArray(symbolInfo, optr) || checkVoid(symbolInfo, optr);
+}
+
+bool checkNullFunctionArrayVoid(symbol_info *s1, symbol_info *s2, string optr)
+{
+  return checkNull(s1, s2) || checkFunction(s1, s2, optr) || checkArray(s1, s2, optr) || checkVoid(s1, s2, optr);
+}
+
 symbol_info *findSymbol(symbol_info *symbolInfo)
 {
   symbol_info *s = symbolTable->lookup(symbolInfo->getName());
@@ -479,23 +489,24 @@ symbol_info *checkAssignCompatibility(symbol_info *lhs, symbol_info *rhs)
 
 symbol_info *setIntermediateValues(string symbol_type, string variable_type, float float_value = 0)
 {
-  symbol_info *target = new symbol_info(to_string(float_value), symbol_type);
+  string name = to_string(float_value);
+  if (variable_type == integer)
+  {
+    name = to_string(int(float_value));
+  }
+  symbol_info *target = new symbol_info(name, symbol_type);
+  target->id_type = VARIABLE;
   target->variable_type = variable_type;
   target->float_value = float_value;
-  target->int_value = float_value;
+  target->int_value = (int)float_value;
+  // cout << line_count << endl;
+  // printCompatibilityRelatedThings(target);
   return target;
 }
 
 symbol_info *checkAndDoMulopThings(symbol_info *left, string optr, symbol_info *right)
 {
-
-  if (checkNull(left, right))
-    return nullptr;
-
-  if (checkArray(left, right, optr))
-    return nullptr;
-
-  if (checkVoid(left, right, optr))
+  if (checkNullFunctionArrayVoid(left, right, optr))
     return nullptr;
 
   if (optr == "%")
@@ -528,7 +539,8 @@ symbol_info *checkAdditionCompatibility(symbol_info *left, string optr, symbol_i
 
   symbol_info *s = new symbol_info(left->getName() + optr + right->getName(), "intermediate");
   setCompatibleRelatedThings(s, left->variable_type == fraction ? left : right);
-  // printCompatibilityRelatedThings(s);
+  cout << line_count << endl;
+  printCompatibilityRelatedThings(s);
   return s;
 }
 
@@ -568,12 +580,7 @@ symbol_info *checkLogicCompetibility(symbol_info *left, string optr, symbol_info
 
 symbol_info *checkFunctionArguments(symbol_info *symbolInfo)
 {
-  // cout << line_count << " ";
-  // symbolTable->printAllScopeTable();
-  // printCompatibilityRelatedThings(symbolInfo);
   symbolInfo = findSymbol(symbolInfo);
-  // printCompatibilityRelatedThings(symbolInfo);
-  // cout << symbolInfo->getName() << " " << symbolInfo->id_type << endl;
   if (symbolInfo == nullptr)
     return nullptr;
   if (symbolInfo->id_type != FUNCTION)
@@ -581,17 +588,14 @@ symbol_info *checkFunctionArguments(symbol_info *symbolInfo)
     printError("is not function");
     return nullptr;
   }
-  // cout << args.size() << " " << symbolInfo->sequence_of_parameters.size() << endl;
   if (args.size() != symbolInfo->sequence_of_parameters.size())
   {
     printError("size mismatch");
     return nullptr;
   }
-  string argus = "";
+  string argus = symbolInfo->getName() + "(";
   for (int i = 0; i < args.size(); i++)
   {
-    // printCompatibilityRelatedThings(args[i]);
-    // printCompatibilityRelatedThings(symbolInfo->sequence_of_parameters[i]);
     if (args[i]->id_type == ARRAY)
     {
       printError("Type mismatch, " + args[i]->getName() + " is an array");
@@ -612,6 +616,7 @@ symbol_info *checkFunctionArguments(symbol_info *symbolInfo)
     argus += args[i]->getName() + ",";
   }
   // cout << argus << endl;
+  argus += ")";
   symbol_info *s = new symbol_info(argus, intermediate);
   s->id_type = VARIABLE;
   s->variable_type = symbolInfo->return_type;
@@ -620,8 +625,6 @@ symbol_info *checkFunctionArguments(symbol_info *symbolInfo)
 
 void checkFuncReturnCompatibility(symbol_info *symbolInfo)
 {
-  // printCompatibilityRelatedThings(symbolInfo);
-  // printCompatibilityRelatedThings(current_function);
   if (symbolInfo->variable_type != current_function->return_type)
   {
     printError("return value does not match");
@@ -630,13 +633,7 @@ void checkFuncReturnCompatibility(symbol_info *symbolInfo)
 
 symbol_info *checkINDECopCompatibility(symbol_info *symbolInfo, string optr)
 {
-  if (checkNull(symbolInfo))
-    return nullptr;
-  if (checkFunction(symbolInfo, optr))
-    return nullptr;
-  if (checkArray(symbolInfo, optr))
-    return nullptr;
-  if (checkVoid(symbolInfo, optr))
+  if (checkNullFunctionArrayVoid(symbolInfo, optr))
     return nullptr;
 
   symbol_info *s = new symbol_info(symbolInfo->getName() + optr, intermediate);
@@ -657,6 +654,35 @@ symbol_info *checkDECOPCompatibility(symbol_info *symbolInfo)
 
 symbol_info *checkUnaryADDOPThings(string optr, symbol_info *symbolInfo)
 {
+  if (checkNullFunctionArrayVoid(symbolInfo, optr))
+    return nullptr;
+
+  symbol_info *s = new symbol_info(optr + symbolInfo->getName(), intermediate);
+  s->id_type = VARIABLE;
+  s->variable_type = symbolInfo->variable_type;
+  return s;
+}
+
+symbol_info *checkNotCompatibility(symbol_info *symbolInfo)
+{
+  if (checkNullFunctionArrayVoid(symbolInfo, "!"))
+    return nullptr;
+
+  symbol_info *s = new symbol_info("!" + symbolInfo->getName(), intermediate);
+  s->id_type = VARIABLE;
+  s->variable_type = integer;
+  return s;
+}
+
+symbol_info *checkLPAREN_Expression_RPAREN(symbol_info *symbolInfo)
+{
+  if (checkNullFunctionArrayVoid(symbolInfo, "()"))
+    return nullptr;
+
+  symbol_info *s = new symbol_info("(" + symbolInfo->getName() + ")", intermediate);
+  s->id_type = VARIABLE;
+  s->variable_type = symbolInfo->variable_type;
+  return s;
 }
 
 // void print_error_recovery_mode(string msg){
