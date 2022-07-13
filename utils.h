@@ -102,7 +102,7 @@ void yyerror(char *s)
 
 void printLog(string str1, string str2, string str3)
 {
-  printf("Line %d: %s : %s\n%s\n", line_count, str1.c_str(), str2.c_str(), str3.c_str());
+  // printf("Line %d: %s : %s\n%s\n", line_count, str1.c_str(), str2.c_str(), str3.c_str());
   fprintf(logout, "Line %d: %s : %s\n%s\n", line_count, str1.c_str(), str2.c_str(), str3.c_str());
 }
 
@@ -162,12 +162,12 @@ bool checkFunction(symbol_info *s1, symbol_info *s2, string str)
 
 bool checkNull(symbol_info *s1)
 {
-  return s1 == nullptr ;
+  return s1 == nullptr;
 }
 
 bool checkArray(symbol_info *s1, string str)
 {
-  if (s1->id_type == ARRAY )
+  if (s1->id_type == ARRAY)
   {
     printError("type ARRAY can not be an operand of " + str);
     return true;
@@ -279,16 +279,15 @@ void insertIntoParameters(symbol_info *symbolInfo, string type)
 void setFunctionParameters()
 {
   // symbolTable->printAllScopeTable();
+  // cout << current_function->getName() << endl;
+  for (int i = 0; !current_function->is_parameters_inserted && i < parameters.size(); i++)
+  {
+    current_function->sequence_of_parameters.push_back(parameters[i]);
+  }
+  current_function->is_parameters_inserted = true;
   for (int i = 0; i < parameters.size(); i++)
   {
-    // auto s = symbolTable->lookup(parameters[i]->getName());
-    // cout << "checking " << parameters[i]->getName() << " ";
-    // printCompatibilityRelatedThings(s);
-    // cout << "here" << endl;
-    // printCompatibilityRelatedThings(parameters[i]);
-
-    // setCompatibleRelatedThings(s, parameters[i]);
-    current_function->sequence_of_parameters.push_back(parameters[i]);
+    current_function->sequence_of_parameters[i]->setName(parameters[i]->getName());
   }
 }
 
@@ -327,6 +326,13 @@ void checkFunctionParameters(string return_type, symbol_info *symbolInfo, bool i
   // printCompatibilityRelatedThings(s);
 }
 
+void setAndClearFunctionThings()
+{
+  setFunctionParameters();
+  parameters.clear();
+  current_function = nullptr;
+}
+
 void setFunctionValues(string return_type, symbol_info *symbolInfo, bool is_defined)
 {
   symbol_info *s = symbolTable->lookup(symbolInfo->getName());
@@ -334,6 +340,10 @@ void setFunctionValues(string return_type, symbol_info *symbolInfo, bool is_defi
   {
     symbolTable->insert(symbolInfo->getName(), symbolInfo->getType());
     checkFunctionParameters(return_type, symbolInfo, is_defined);
+  }
+  else if (s->id_type != FUNCTION)
+  {
+    printError("same name");
   }
   else if (!s->is_defined && is_defined)
   {
@@ -481,7 +491,7 @@ symbol_info *checkAndDoMulopThings(symbol_info *left, string optr, symbol_info *
 
   if (checkNull(left, right))
     return nullptr;
-  
+
   if (checkArray(left, right, optr))
     return nullptr;
 
@@ -618,24 +628,35 @@ void checkFuncReturnCompatibility(symbol_info *symbolInfo)
   }
 }
 
-symbol_info* checkINDECopCompatibility(symbol_info* symbolInfo, string optr){
-  if(checkNull(symbolInfo)) return nullptr;
-  if(checkFunction(symbolInfo, optr)) return nullptr;
-  if(checkArray(symbolInfo, optr)) return nullptr;
-  if(checkVoid(symbolInfo, optr)) return nullptr;
+symbol_info *checkINDECopCompatibility(symbol_info *symbolInfo, string optr)
+{
+  if (checkNull(symbolInfo))
+    return nullptr;
+  if (checkFunction(symbolInfo, optr))
+    return nullptr;
+  if (checkArray(symbolInfo, optr))
+    return nullptr;
+  if (checkVoid(symbolInfo, optr))
+    return nullptr;
 
-  symbol_info* s = new symbol_info(symbolInfo->getName()+ optr, intermediate);
+  symbol_info *s = new symbol_info(symbolInfo->getName() + optr, intermediate);
   s->id_type = VARIABLE;
   s->variable_type = symbolInfo->variable_type;
   return s;
 }
 
-symbol_info* checkINCOPCompatibility(symbol_info* symbolInfo){
+symbol_info *checkINCOPCompatibility(symbol_info *symbolInfo)
+{
   return checkINDECopCompatibility(symbolInfo, "++");
 }
 
-symbol_info* checkDECOPCompatibility(symbol_info* symbolInfo){
+symbol_info *checkDECOPCompatibility(symbol_info *symbolInfo)
+{
   return checkINDECopCompatibility(symbolInfo, "--");
+}
+
+symbol_info *checkUnaryADDOPThings(string optr, symbol_info *symbolInfo)
+{
 }
 
 // void print_error_recovery_mode(string msg){

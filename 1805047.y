@@ -83,6 +83,7 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 {
 	string str = stackPop(type_specifier) + $2->getName() + "(" + stackPop(parameter_list) + ");";
 	setFunctionValues(*$1, $2, false);
+	setAndClearFunctionThings();
 	stackPush(func_declaration, str);
 	printLog("func_declaration", "type_specifier ID LPAREN parameter_list RPAREN SEMICOLON", str);
 }
@@ -90,6 +91,7 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 {
 	string str = stackPop(type_specifier) + " " + $2->getName() + "();";
 	setFunctionValues(*$1, $2, false);
+	setAndClearFunctionThings();
 	stackPush(func_declaration, str);
 	printLog("func_declaration", "type_specifier ID LPAREN RPAREN SEMICOLON", str);
 }
@@ -103,6 +105,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 	string str = stackPop(type_specifier) + " " + $2->getName() + "(" + stackPop(parameter_list) + ")" + stackPop(compound_statement);
 	stackPush(func_definition, str);
 	printLog("func_definition", "type_specifier ID LPAREN parameter_list RPAREN compound_statement", str);
+	current_function = nullptr;
 }
 		| type_specifier ID LPAREN RPAREN
 {
@@ -113,6 +116,7 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 	// setFunctionValues(*$1, $2, true);
 	stackPush(func_definition, str);
 	printLog("func_definition", "type_specifier ID LPAREN RPAREN compound_statement", str);
+	current_function = nullptr;
 }
  		;				
 
@@ -424,6 +428,7 @@ term :	unary_expression
 
 unary_expression : ADDOP unary_expression 
 {
+	// $$ = checkUnaryADDOPThings($1, $2);
 	// string str = *$1 + stackPop(unary_expression);
 	// stackPush(unary_expression, str);
 	// printLog("unary_expression", "ADDOP unary_expression", str);
@@ -431,6 +436,9 @@ unary_expression : ADDOP unary_expression
 		 | NOT unary_expression 
 {
 	
+	// string str = *$1 + stackPop(unary_expression);
+	// stackPush(unary_expression, str);
+	// printLog("unary_expression", "ADDOP unary_expression", str);
 }
 		 | factor 
 {
