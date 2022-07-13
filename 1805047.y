@@ -41,13 +41,14 @@ start : program
 {
 	string str = stackPop(program);
 	stackPush(start, str);
-	printLog("start", "program", str);
+	printLog("start", "program", "");
+	printLineAndErrors();
 }
 	;
 
 program : program unit 
 {
-	string str = stackPop(program) + "\n" + stackPop(unit);
+	string str = stackPop(program) + "\n\n" + stackPop(unit);
 	stackPush(program, str);
 	printLog("program", "program unit", str);
 }
@@ -301,6 +302,7 @@ statement : var_declaration
 }
 	  | PRINTLN LPAREN ID RPAREN SEMICOLON
 {
+	findVariable($3);
 	string str = "printf(" + $3->getName() + ");";
 	stackPush(statement, str);
 	printLog("statement", "PRINTLN LPAREN ID RPAREN SEMICOLON", str);
@@ -329,7 +331,7 @@ expression_statement 	: SEMICOLON
 	  
 variable : ID 		
 {
-	$$ = findSymbol($1);
+	$$ = findVariable($1);
 	stackPush(variable, $1->getName());
 	printLog("variable", "ID", $1->getName());
 }

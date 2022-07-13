@@ -823,8 +823,8 @@ char convertStringToChar(string str){
 
 void printErrorLog(string str, int error_line = line_count, string error = yytext){
     // cout << "here " <<  error  << " oka ";
-    // fprintf(logout, "\nError at line no %d: %s %s\n", error_line, str.c_str(), error.c_str());
-    // error_count++;
+    fprintf(errorout, "\nError at line no %d: %s %s\n", error_line, str.c_str(), error.c_str());
+    lexical_error_count++;
 }
 
 void printCommentLog(){

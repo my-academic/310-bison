@@ -49,6 +49,12 @@
         "__split_buffer": "c",
         "iosfwd": "c",
         "__locale": "c",
-        "stdexcept": "c"
+        "stdexcept": "c",
+        "initializer_list": "c",
+        "queue": "c",
+        "span": "c",
+        "stack": "c",
+        "valarray": "c",
+        "ranges": "c"
     }
 }
