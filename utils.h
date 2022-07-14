@@ -139,7 +139,7 @@ bool checkVoid(symbol_info *s1, symbol_info *s2, string str)
 {
   if (s1->variable_type == _void || s2->variable_type == _void)
   {
-    printError("type VOID can not be an operand of " + str);
+    printError("Void used in expression");
     return true;
   }
   return false;
@@ -174,7 +174,7 @@ bool checkVoid(symbol_info *s1, string str)
 {
   if (s1->variable_type == _void)
   {
-    printError("type VOID can not be an operand of " + str);
+    printError("Void used in expression");
     return true;
   }
   return false;
@@ -229,6 +229,8 @@ void setVariableAndArrayRelatedValues(symbol_info *symbolInfo, string type, symb
   symbolInfo->array_type = type;
   symbolInfo->int_value = int_value;
   symbolInfo->float_value = float_value;
+  cout << line_count << " " << symbolInfo->getName() << " "<<  type << " "<< s->size_of_array << " "<< symbolInfo->size_of_array  << endl;
+
   // cout << symbolInfo->getName() << " " << symbolInfo << endl;
 }
 
@@ -270,8 +272,7 @@ void setVariableAndArrayValues(string type)
     }
     else
     {
-      string err("Multiple declaration of " + s->getName());
-      printError(err);
+      printError("Multiple declaration of " + s->getName());
     }
     // delete variables[i];
   }
@@ -370,37 +371,10 @@ void setFunctionValues(string return_type, symbol_info *symbolInfo, bool is_defi
     // check screenshot
     if (s->is_defined)
     {
-      printError("Multiple definition of ", + s->getName());
+      printError("Multiple definition of " + s->getName());
     }
   }
   isFunctionStarted = true;
-}
-
-void setArrayRelatedValues(symbol_info *symbolInfo, bool change_index = false, int index_value = -2)
-{
-  // cout << symbolInfo->current_index << endl;
-  if (change_index)
-  {
-    if (index_value >= symbolInfo->size_of_array)
-      printError("array index out of bound");
-    else
-      symbolInfo->current_index = index_value;
-  }
-  // if (change_value)
-  // {
-  //   if (symbolInfo->array_type == fraction)
-  //   {
-  //     symbolInfo->float_array[symbolInfo->current_index] = value;
-  //   }
-  //   else
-  //   {
-  //     symbolInfo->int_array[symbolInfo->current_index] = int(value);
-  //   }
-  // }
-  // if (change_size)
-  // {
-  //   symbolInfo->size_of_array = size;
-  // }
 }
 
 symbol_info *checkArrayIndex(string var_name, symbol_info *idx)
@@ -419,7 +393,6 @@ symbol_info *checkArrayIndex(string var_name, symbol_info *idx)
       printError(var_name + " is not an array");
     else
     {
-      setArrayRelatedValues(s, true, idx->int_value);
       symbol_info *t = new symbol_info(var_name + "[" + idx->getName() + "]", intermediate);
       t->id_type = VARIABLE;
       t->variable_type = s->array_type;
@@ -440,24 +413,39 @@ void resetArrayIndex(symbol_info *s)
 
 symbol_info *checkAssignCompatibility(symbol_info *lhs, symbol_info *rhs)
 {
-  // cout << "++" << endl;
+  // cout << line_count << endl << "1++" << endl;
   // printCompatibilityRelatedThings(lhs);
-  // cout<< "--" << endl;
+  // cout<< "2--" << endl;
   // printCompatibilityRelatedThings(rhs);
-  // cout << ".." << endl;
+  // cout << "3.." << endl;
   if (lhs == nullptr || rhs == nullptr)
   {
+    return nullptr;
   }
-  else if ((lhs->id_type == ARRAY && lhs->current_index != -2 && lhs->array_type != rhs->variable_type) || (lhs->id_type == VARIABLE && lhs->variable_type != rhs->variable_type))
+
+  else if (lhs->id_type == ARRAY || rhs->id_type == ARRAY)
   {
-    printError("Type Mismatch");
+    printError("Type Mismatch, " + (lhs->id_type == ARRAY ? lhs->getName() : rhs->getName()) + " is an array");
+    return nullptr;
   }
-  else if (lhs->id_type == ARRAY && lhs->current_index == -2)
+  else if (lhs->id_type == FUNCTION || rhs->id_type == FUNCTION)
   {
-    printError("Type Mismatch, " + lhs->getName() + " is an array");
+    printError("Type Mismatch, " + (lhs->id_type == FUNCTION ? lhs->getName() : rhs->getName()) + " is a function");
+    return nullptr;
   }
-  // printCompatibilityRelatedThings(lhs);
-  return lhs;
+  else if (lhs->variable_type == _void || rhs->variable_type == _void)
+  {
+    printError("Void used in expression");
+    return nullptr;
+  }
+  else if(lhs->variable_type == integer && rhs->variable_type == fraction){
+    printError("Type mismatch");
+    return nullptr;
+  }
+  symbol_info *s = new symbol_info(lhs->getName() + " = " + rhs->getName(), "intermediate");
+  s->id_type = VARIABLE;
+  s->variable_type = lhs->variable_type;
+  return s;
 }
 
 symbol_info *setIntermediateValues(string symbol_type, string variable_type, float float_value = 0)
