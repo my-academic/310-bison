@@ -307,22 +307,6 @@ void setFunctionParameters()
   }
 }
 
-// void setFunctionRelatedValues(symbol_info *symbolInfo, string return_type, bool is_defined)
-// {
-//   // symbolTable->printAllScopeTable();
-//   for (int i = 0; i < parameters.size(); i++)
-//   {
-//     // auto s = symbolTable->lookup(parameters[i]->getName());
-//     // cout << "checking " << parameters[i]->getName() << " ";
-//     // printCompatibilityRelatedThings(s);
-//     // cout << "here" << endl;
-//     // printCompatibilityRelatedThings(parameters[i]);
-
-//     // setCompatibleRelatedThings(s, parameters[i]);
-//     // symbolInfo->sequence_of_parameters.push_back(s);
-//   }
-// }
-
 void checkFunctionParameters(string return_type, symbol_info *symbolInfo, bool is_defined)
 {
   symbol_info *s = symbolTable->lookup(symbolInfo->getName());
@@ -382,42 +366,17 @@ void setFunctionValues(string return_type, symbol_info *symbolInfo, bool is_defi
   else
   {
     // error
-    fprintf(errorout, "line %d : function error\n", line_count);
+    // check first in online compiler about multiple declaration
+    // check screenshot
+    if (s->is_defined)
+    {
+      printError("Multiple definition of ", + s->getName());
+    }
   }
   isFunctionStarted = true;
 }
 
-void enterNewScope()
-{
-  symbolTable->enterScope();
-  for (size_t i = 0; isFunctionStarted && i < parameters.size(); i++)
-  {
-
-    symbolTable->insert(parameters[i]->getName(), parameters[i]->getType());
-    symbol_info *s = symbolTable->lookup(parameters[i]->getName());
-    setCompatibleRelatedThings(s, parameters[i]);
-  }
-
-  setFunctionParameters();
-
-  parameters.clear();
-  isFunctionStarted = false;
-
-  // symbolTable->printAllScopeTable();
-}
-
-void printTable()
-{
-  symbolTable->printAllScopeTable(logout);
-}
-
-void exitScope()
-{
-  // symbolTable->printAllScopeTable();
-  symbolTable->exitScope();
-}
-
-void setArrayRelatedValues(symbol_info *symbolInfo, bool change_index = false, int index_value = -2, bool change_value = false, float value = 0, bool change_size = false, int size = 0)
+void setArrayRelatedValues(symbol_info *symbolInfo, bool change_index = false, int index_value = -2)
 {
   // cout << symbolInfo->current_index << endl;
   if (change_index)
@@ -427,26 +386,25 @@ void setArrayRelatedValues(symbol_info *symbolInfo, bool change_index = false, i
     else
       symbolInfo->current_index = index_value;
   }
-  if (change_value)
-  {
-    if (symbolInfo->array_type == fraction)
-    {
-      symbolInfo->float_array[symbolInfo->current_index] = value;
-    }
-    else
-    {
-      symbolInfo->int_array[symbolInfo->current_index] = int(value);
-    }
-  }
-  if (change_size)
-  {
-    symbolInfo->size_of_array = size;
-  }
+  // if (change_value)
+  // {
+  //   if (symbolInfo->array_type == fraction)
+  //   {
+  //     symbolInfo->float_array[symbolInfo->current_index] = value;
+  //   }
+  //   else
+  //   {
+  //     symbolInfo->int_array[symbolInfo->current_index] = int(value);
+  //   }
+  // }
+  // if (change_size)
+  // {
+  //   symbolInfo->size_of_array = size;
+  // }
 }
 
 symbol_info *checkArrayIndex(string var_name, symbol_info *idx)
 {
-  // cout <<
   if (idx->variable_type == fraction)
   {
     printError("Expression inside third brackets not an integer");
@@ -461,7 +419,7 @@ symbol_info *checkArrayIndex(string var_name, symbol_info *idx)
       printError(var_name + " is not an array");
     else
     {
-      setArrayRelatedValues(s, true, idx->int_value, false, 0);
+      setArrayRelatedValues(s, true, idx->int_value);
       symbol_info *t = new symbol_info(var_name + "[" + idx->getName() + "]", intermediate);
       t->id_type = VARIABLE;
       t->variable_type = s->array_type;
@@ -586,7 +544,7 @@ symbol_info *checkLogicCompetibility(symbol_info *left, string optr, symbol_info
   if (checkNullFunctionArrayVoid(left, right, optr))
     return nullptr;
 
-  symbol_info *s = new symbol_info(left->getName() + optr + right->getName(), "intermediate");
+  symbol_info *s = new symbol_info(left->getName() + optr + right->getName(), intermediate);
   s->id_type = VARIABLE;
   s->variable_type = integer;
   return s;
@@ -714,4 +672,34 @@ void printLineAndErrors()
 {
   symbolTable->printAllScopeTable(logout);
   fprintf(logout, "\nTotal lines: %d\nTotal errors: %d\n\n", line_count, syntax_error_count + lexical_error_count);
+}
+
+void enterNewScope()
+{
+  symbolTable->enterScope();
+  for (size_t i = 0; isFunctionStarted && i < parameters.size(); i++)
+  {
+
+    symbolTable->insert(parameters[i]->getName(), parameters[i]->getType());
+    symbol_info *s = symbolTable->lookup(parameters[i]->getName());
+    setCompatibleRelatedThings(s, parameters[i]);
+  }
+
+  setFunctionParameters();
+
+  parameters.clear();
+  isFunctionStarted = false;
+
+  // symbolTable->printAllScopeTable();
+}
+
+void printTable()
+{
+  symbolTable->printAllScopeTable(logout);
+}
+
+void exitScope()
+{
+  // symbolTable->printAllScopeTable();
+  symbolTable->exitScope();
 }

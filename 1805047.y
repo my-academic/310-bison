@@ -48,15 +48,15 @@ start : program
 
 program : program unit 
 {
-	string str = stackPop(program) + "\n\n" + stackPop(unit);
+	string str = stackPop(program) + "\n" + stackPop(unit);
 	stackPush(program, str);
-	printLog("program", "program unit", str);
+	printLog("program", "program unit", str + "\n");
 }
 	| unit
 {
 	string str = stackPop(unit);
 	stackPush(program, str);
-	printLog("program", "unit", str);
+	printLog("program", "unit", str + "\n");
 }
 	;
 	
@@ -64,19 +64,19 @@ unit : var_declaration
 {
 	string str = stackPop(var_declaration);
 	stackPush(unit, str);
-	printLog("unit", "var_declaration", str);
+	printLog("unit", "var_declaration", str + "\n");
 }
      | func_declaration
 {
 	string str = stackPop(func_declaration);
 	stackPush(unit, str);
-	printLog("unit", "func_declaration", str);
+	printLog("unit", "func_declaration", str + "\n");
 }
      | func_definition
 {
 	string str = stackPop(func_definition);
 	stackPush(unit, str);
-	printLog("unit", "func_definition", str);
+	printLog("unit", "func_definition", str + "\n");
 }
      ;
      
@@ -86,7 +86,7 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 	setFunctionValues(*$1, $2, false);
 	setAndClearFunctionThings();
 	stackPush(func_declaration, str);
-	printLog("func_declaration", "type_specifier ID LPAREN parameter_list RPAREN SEMICOLON", str);
+	printLog("func_declaration", "type_specifier ID LPAREN parameter_list RPAREN SEMICOLON", str + "\n");
 }
 		| type_specifier ID LPAREN RPAREN SEMICOLON
 {
@@ -94,7 +94,7 @@ func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 	setFunctionValues(*$1, $2, false);
 	setAndClearFunctionThings();
 	stackPush(func_declaration, str);
-	printLog("func_declaration", "type_specifier ID LPAREN RPAREN SEMICOLON", str);
+	printLog("func_declaration", "type_specifier ID LPAREN RPAREN SEMICOLON", str + "\n");
 }
 		;
 		 
@@ -164,7 +164,7 @@ compound_statement : LCURL
 {
 	string str = "{\n" + stackPop(statements) + "\n}";
 	stackPush(compound_statement, str);
-	printLog("compound_statement", "LCURL statements RCURL", str);
+	printLog("compound_statement", "LCURL statements RCURL", str + "\n");
 
 	printTable();
 	exitScope();
@@ -177,7 +177,7 @@ compound_statement : LCURL
 	string str = "{}";
 	stackPush(compound_statement, str);
 	enterNewScope();
-	printLog("compound_statement", "LCURL RCURL", str);
+	printLog("compound_statement", "LCURL RCURL", str + "\n");
 }
  		    ;
  		    
@@ -243,14 +243,14 @@ statements : statement
 {
 	string str = stackPop(statement);
 	stackPush(statements, str);
-	printLog("statements", "statement", str);
+	printLog("statements", "statement", str + "\n");
 }
 	   | statements statement
 {
 
 	string str = stackPop(statements) + "\n" + stackPop(statement);
 	stackPush(statements, str);
-	printLog("statements", "statements statement", str);
+	printLog("statements", "statements statement", str + "\n");
 }
 	   ;
 	   
@@ -258,19 +258,19 @@ statement : var_declaration
 {
 	string str =  stackPop(var_declaration);
 	stackPush(statement, str);
-	printLog("statement", "var_declaration", str);
+	printLog("statement", "var_declaration", str + "\n");
 }
 	  | expression_statement
 {
 	string str =  stackPop(expression_statement);
 	stackPush(statement, str);
-	printLog("statement", "expression_statement", str);
+	printLog("statement", "expression_statement", str + "\n");
 }
 	  | compound_statement
 {
 	string str =  stackPop(compound_statement);
 	stackPush(statement, str);
-	printLog("statement", "compound_statement", str);
+	printLog("statement", "compound_statement", str + "\n");
 }
 	  | FOR LPAREN expression_statement expression_statement expression RPAREN statement
 {
@@ -278,13 +278,13 @@ statement : var_declaration
 	string str2 = stackPop(expression_statement);
 	string str = "for(" + str2 + str1 + stackPop(expression) + ")" + stackPop(statement);
 	stackPush(statement, str);
-	printLog("statement", "FOR LPAREN expression_statement expression_statement expression RPAREN statement", str);
+	printLog("statement", "FOR LPAREN expression_statement expression_statement expression RPAREN statement", str + "\n");
 }
 	  | IF LPAREN expression RPAREN statement %prec LOWER_THAN_ELSE
 {
 	string str = "if(" + stackPop(expression) + ")" + stackPop(statement);
 	stackPush(statement, str);
-	printLog("statement", "IF LPAREN expression RPAREN statement", str);
+	printLog("statement", "IF LPAREN expression RPAREN statement", str + "\n");
 }
 	  | IF LPAREN expression RPAREN statement ELSE statement
 {
@@ -292,27 +292,27 @@ statement : var_declaration
 	string str2 = stackPop(statement);
 	string str = "if (" + stackPop(expression) + ")" + str2 + "\nelse " + str1;
 	stackPush(statement, str);
-	printLog("statement", "IF LPAREN expression RPAREN statement ELSE statement", str);
+	printLog("statement", "IF LPAREN expression RPAREN statement ELSE statement", str + "\n");
 }
 	  | WHILE LPAREN expression RPAREN statement
 {
 	string str = "while (" + stackPop(expression) + ")" + stackPop(statement);
 	stackPush(statement, str);
-	printLog("statement", "WHILE LPAREN expression RPAREN statement", str);
+	printLog("statement", "WHILE LPAREN expression RPAREN statement", str + "\n");
 }
 	  | PRINTLN LPAREN ID RPAREN SEMICOLON
 {
 	findVariable($3);
 	string str = "printf(" + $3->getName() + ");";
 	stackPush(statement, str);
-	printLog("statement", "PRINTLN LPAREN ID RPAREN SEMICOLON", str);
+	printLog("statement", "PRINTLN LPAREN ID RPAREN SEMICOLON", str + "\n");
 }
 	  | RETURN expression SEMICOLON
 {
 	checkFuncReturnCompatibility($2);
 	string str = "return " + stackPop(expression) + ";";
 	stackPush(statement, str);
-	printLog("statement", "RETURN expression SEMICOLON", str);
+	printLog("statement", "RETURN expression SEMICOLON", str + "\n");
 }
 	  ;
 	  

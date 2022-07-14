@@ -27,6 +27,7 @@ Line 1: program : unit
 
 int x,y,z;
 
+
 Line 1: type_specifier : FLOAT
 
 float
@@ -47,8 +48,8 @@ float a;
 Line 1: program : program unit
 
 int x,y,z;
-
 float a;
+
 
 Line 3: type_specifier : VOID
 
@@ -58,17 +59,18 @@ Line 3: func_declaration : type_specifier ID LPAREN RPAREN SEMICOLON
 
 void foo();
 
+
 Line 3: unit : func_declaration
 
 void foo();
 
+
 Line 3: program : program unit
 
 int x,y,z;
-
 float a;
-
 void foo();
+
 
 Line 5: type_specifier : INT
 
@@ -146,9 +148,11 @@ Line 6: statement : RETURN expression SEMICOLON
 
 return a+b;
 
+
 Line 6: statements : statement
 
 return a+b;
+
 
 Line 7: compound_statement : LCURL statements RCURL
 
@@ -157,9 +161,13 @@ return a+b;
 }
 
 
+
+
 ScopeTable # 1.1 
 4 -->  < a : ID> 
 5 -->  < b : ID> 
+
+
 
 ScopeTable # 1 
 3 -->  < var : ID> 
@@ -168,6 +176,7 @@ ScopeTable # 1
 27 -->  < x : ID> 
 28 -->  < y : ID> 
 29 -->  < z : ID> 
+
 Line 7: func_definition : type_specifier ID LPAREN parameter_list RPAREN compound_statement
 
 int var(int a,int b){
@@ -180,17 +189,16 @@ int var(int a,int b){
 return a+b;
 }
 
+
 Line 7: program : program unit
 
 int x,y,z;
-
 float a;
-
 void foo();
-
 int var(int a,int b){
 return a+b;
 }
+
 
 Line 9: type_specifier : VOID
 
@@ -236,9 +244,11 @@ Line 10: statement : expression_statement
 
 x=2;
 
+
 Line 10: statements : statement
 
 x=2;
+
 
 Line 11: variable : ID
 
@@ -300,10 +310,12 @@ Line 11: statement : expression_statement
 
 y=x-5;
 
+
 Line 11: statements : statements statement
 
 x=2;
 y=x-5;
+
 
 Line 12: compound_statement : LCURL statements RCURL
 
@@ -313,7 +325,11 @@ y=x-5;
 }
 
 
+
+
 ScopeTable # 1.2 
+
+
 
 ScopeTable # 1 
 3 -->  < var : ID> 
@@ -322,6 +338,7 @@ ScopeTable # 1
 27 -->  < x : ID> 
 28 -->  < y : ID> 
 29 -->  < z : ID> 
+
 Line 12: func_definition : type_specifier ID LPAREN RPAREN compound_statement
 
 void foo(){
@@ -336,22 +353,20 @@ x=2;
 y=x-5;
 }
 
+
 Line 12: program : program unit
 
 int x,y,z;
-
 float a;
-
 void foo();
-
 int var(int a,int b){
 return a+b;
 }
-
 void foo(){
 x=2;
 y=x-5;
 }
+
 
 Line 14: type_specifier : INT
 
@@ -385,9 +400,11 @@ Line 15: statement : var_declaration
 
 int a[2],c,i,j;
 
+
 Line 15: statements : statement
 
 int a[2],c,i,j;
+
 
 Line 15: type_specifier : FLOAT
 
@@ -405,10 +422,12 @@ Line 15: statement : var_declaration
 
 float d;
 
+
 Line 15: statements : statements statement
 
 int a[2],c,i,j;
 float d;
+
 
 Line 16: factor : CONST_INT
 
@@ -478,11 +497,13 @@ Line 16: statement : expression_statement
 
 a[0];
 
+
 Line 16: statements : statements statement
 
 int a[2],c,i,j;
 float d;
 a[0];
+
 
 Line 17: factor : CONST_INT
 
@@ -552,12 +573,14 @@ Line 17: statement : expression_statement
 
 a[1]=5;
 
+
 Line 17: statements : statements statement
 
 int a[2],c,i,j;
 float d;
 a[0];
 a[1]=5;
+
 
 Line 18: variable : ID
 
@@ -679,6 +702,7 @@ Line 18: statement : expression_statement
 
 i=a[0]+a[1];
 
+
 Line 18: statements : statements statement
 
 int a[2],c,i,j;
@@ -686,6 +710,7 @@ float d;
 a[0];
 a[1]=5;
 i=a[0]+a[1];
+
 
 Line 19: variable : ID
 
@@ -851,6 +876,7 @@ Line 19: statement : expression_statement
 
 j=2*3+(5%3<4&&8)||2;
 
+
 Line 19: statements : statements statement
 
 int a[2],c,i,j;
@@ -859,6 +885,7 @@ a[0];
 a[1]=5;
 i=a[0]+a[1];
 j=2*3+(5%3<4&&8)||2;
+
 
 Line 20: variable : ID
 
@@ -1000,6 +1027,7 @@ Line 20: statement : expression_statement
 
 d=var(1,2*3)+3.5*2;
 
+
 Line 20: statements : statements statement
 
 int a[2],c,i,j;
@@ -1009,6 +1037,7 @@ a[1]=5;
 i=a[0]+a[1];
 j=2*3+(5%3<4&&8)||2;
 d=var(1,2*3)+3.5*2;
+
 
 Line 21: factor : CONST_INT
 
@@ -1042,6 +1071,7 @@ Line 21: statement : RETURN expression SEMICOLON
 
 return 0;
 
+
 Line 21: statements : statements statement
 
 int a[2],c,i,j;
@@ -1052,6 +1082,7 @@ i=a[0]+a[1];
 j=2*3+(5%3<4&&8)||2;
 d=var(1,2*3)+3.5*2;
 return 0;
+
 
 Line 22: compound_statement : LCURL statements RCURL
 
@@ -1067,12 +1098,16 @@ return 0;
 }
 
 
+
+
 ScopeTable # 1.3 
 4 -->  < a : ID> 
 6 -->  < c : ID> 
 7 -->  < d : ID> 
 12 -->  < i : ID> 
 13 -->  < j : ID> 
+
+
 
 ScopeTable # 1 
 3 -->  < var : ID> 
@@ -1082,6 +1117,7 @@ ScopeTable # 1
 27 -->  < x : ID> 
 28 -->  < y : ID> 
 29 -->  < z : ID> 
+
 Line 22: func_definition : type_specifier ID LPAREN RPAREN compound_statement
 
 int main(){
@@ -1108,23 +1144,19 @@ d=var(1,2*3)+3.5*2;
 return 0;
 }
 
+
 Line 22: program : program unit
 
 int x,y,z;
-
 float a;
-
 void foo();
-
 int var(int a,int b){
 return a+b;
 }
-
 void foo(){
 x=2;
 y=x-5;
 }
-
 int main(){
 int a[2],c,i,j;
 float d;
@@ -1136,7 +1168,9 @@ d=var(1,2*3)+3.5*2;
 return 0;
 }
 
+
 Line 22: start : program
+
 
 
 
@@ -1149,6 +1183,7 @@ ScopeTable # 1
 27 -->  < x : ID> 
 28 -->  < y : ID> 
 29 -->  < z : ID> 
+
 
 Total lines: 22
 Total errors: 0

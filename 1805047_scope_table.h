@@ -108,7 +108,7 @@ public:
 
     void print(FILE* logout)
     {
-        fprintf(logout, "\nScopeTable # %s \n", id.c_str());
+        fprintf(logout, "\n\nScopeTable # %s \n", id.c_str());
         // cout << endl << "ScopeTable # " << id << endl;
         for (size_t i = 0; i < bucketSize; i++)
         {
@@ -120,6 +120,7 @@ public:
             fprintf(logout, "\n");
             // cout << endl;
         }
+        fprintf(logout, "\n");
         // cout << endl;
     }
 

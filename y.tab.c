@@ -1508,9 +1508,9 @@ yyreduce:
   case 3:
 #line 50 "1805047.y"
     {
-	string str = stackPop(program) + "\n\n" + stackPop(unit);
+	string str = stackPop(program) + "\n" + stackPop(unit);
 	stackPush(program, str);
-	printLog("program", "program unit", str);
+	printLog("program", "program unit", str + "\n");
 }
     break;
 
@@ -1519,7 +1519,7 @@ yyreduce:
     {
 	string str = stackPop(unit);
 	stackPush(program, str);
-	printLog("program", "unit", str);
+	printLog("program", "unit", str + "\n");
 }
     break;
 
@@ -1537,7 +1537,7 @@ yyreduce:
     {
 	string str = stackPop(func_declaration);
 	stackPush(unit, str);
-	printLog("unit", "func_declaration", str);
+	printLog("unit", "func_declaration", str + "\n");
 }
     break;
 
@@ -1546,7 +1546,7 @@ yyreduce:
     {
 	string str = stackPop(func_definition);
 	stackPush(unit, str);
-	printLog("unit", "func_definition", str);
+	printLog("unit", "func_definition", str + "\n");
 }
     break;
 
@@ -1557,7 +1557,7 @@ yyreduce:
 	setFunctionValues(*(yyvsp[(1) - (6)].input_string), (yyvsp[(2) - (6)].symbolValue), false);
 	setAndClearFunctionThings();
 	stackPush(func_declaration, str);
-	printLog("func_declaration", "type_specifier ID LPAREN parameter_list RPAREN SEMICOLON", str);
+	printLog("func_declaration", "type_specifier ID LPAREN parameter_list RPAREN SEMICOLON", str + "\n");
 }
     break;
 
@@ -1568,7 +1568,7 @@ yyreduce:
 	setFunctionValues(*(yyvsp[(1) - (5)].input_string), (yyvsp[(2) - (5)].symbolValue), false);
 	setAndClearFunctionThings();
 	stackPush(func_declaration, str);
-	printLog("func_declaration", "type_specifier ID LPAREN RPAREN SEMICOLON", str);
+	printLog("func_declaration", "type_specifier ID LPAREN RPAREN SEMICOLON", str + "\n");
 }
     break;
 
@@ -1663,7 +1663,7 @@ yyreduce:
     {
 	string str = "{\n" + stackPop(statements) + "\n}";
 	stackPush(compound_statement, str);
-	printLog("compound_statement", "LCURL statements RCURL", str);
+	printLog("compound_statement", "LCURL statements RCURL", str + "\n");
 
 	printTable();
 	exitScope();
@@ -1683,7 +1683,7 @@ yyreduce:
 	string str = "{}";
 	stackPush(compound_statement, str);
 	enterNewScope();
-	printLog("compound_statement", "LCURL RCURL", str);
+	printLog("compound_statement", "LCURL RCURL", str + "\n");
 }
     break;
 
@@ -1768,7 +1768,7 @@ yyreduce:
     {
 	string str = stackPop(statement);
 	stackPush(statements, str);
-	printLog("statements", "statement", str);
+	printLog("statements", "statement", str + "\n");
 }
     break;
 
@@ -1778,7 +1778,7 @@ yyreduce:
 
 	string str = stackPop(statements) + "\n" + stackPop(statement);
 	stackPush(statements, str);
-	printLog("statements", "statements statement", str);
+	printLog("statements", "statements statement", str + "\n");
 }
     break;
 
@@ -1787,7 +1787,7 @@ yyreduce:
     {
 	string str =  stackPop(var_declaration);
 	stackPush(statement, str);
-	printLog("statement", "var_declaration", str);
+	printLog("statement", "var_declaration", str + "\n");
 }
     break;
 
@@ -1796,7 +1796,7 @@ yyreduce:
     {
 	string str =  stackPop(expression_statement);
 	stackPush(statement, str);
-	printLog("statement", "expression_statement", str);
+	printLog("statement", "expression_statement", str + "\n");
 }
     break;
 
@@ -1805,7 +1805,7 @@ yyreduce:
     {
 	string str =  stackPop(compound_statement);
 	stackPush(statement, str);
-	printLog("statement", "compound_statement", str);
+	printLog("statement", "compound_statement", str + "\n");
 }
     break;
 
@@ -1816,7 +1816,7 @@ yyreduce:
 	string str2 = stackPop(expression_statement);
 	string str = "for(" + str2 + str1 + stackPop(expression) + ")" + stackPop(statement);
 	stackPush(statement, str);
-	printLog("statement", "FOR LPAREN expression_statement expression_statement expression RPAREN statement", str);
+	printLog("statement", "FOR LPAREN expression_statement expression_statement expression RPAREN statement", str + "\n");
 }
     break;
 
@@ -1825,7 +1825,7 @@ yyreduce:
     {
 	string str = "if(" + stackPop(expression) + ")" + stackPop(statement);
 	stackPush(statement, str);
-	printLog("statement", "IF LPAREN expression RPAREN statement", str);
+	printLog("statement", "IF LPAREN expression RPAREN statement", str + "\n");
 }
     break;
 
@@ -1836,7 +1836,7 @@ yyreduce:
 	string str2 = stackPop(statement);
 	string str = "if (" + stackPop(expression) + ")" + str2 + "\nelse " + str1;
 	stackPush(statement, str);
-	printLog("statement", "IF LPAREN expression RPAREN statement ELSE statement", str);
+	printLog("statement", "IF LPAREN expression RPAREN statement ELSE statement", str + "\n");
 }
     break;
 
@@ -1845,7 +1845,7 @@ yyreduce:
     {
 	string str = "while (" + stackPop(expression) + ")" + stackPop(statement);
 	stackPush(statement, str);
-	printLog("statement", "WHILE LPAREN expression RPAREN statement", str);
+	printLog("statement", "WHILE LPAREN expression RPAREN statement", str + "\n");
 }
     break;
 
@@ -1855,7 +1855,7 @@ yyreduce:
 	findVariable((yyvsp[(3) - (5)].symbolValue));
 	string str = "printf(" + (yyvsp[(3) - (5)].symbolValue)->getName() + ");";
 	stackPush(statement, str);
-	printLog("statement", "PRINTLN LPAREN ID RPAREN SEMICOLON", str);
+	printLog("statement", "PRINTLN LPAREN ID RPAREN SEMICOLON", str + "\n");
 }
     break;
 
@@ -1865,7 +1865,7 @@ yyreduce:
 	checkFuncReturnCompatibility((yyvsp[(2) - (3)].symbolValue));
 	string str = "return " + stackPop(expression) + ";";
 	stackPush(statement, str);
-	printLog("statement", "RETURN expression SEMICOLON", str);
+	printLog("statement", "RETURN expression SEMICOLON", str + "\n");
 }
     break;
 
