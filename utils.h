@@ -16,7 +16,6 @@ string _void = "void";
 string intermediate = "intermediate";
 
 // storing variable data type
-string datatype;
 vector<symbol_info *> variables;
 
 // for function parameters
@@ -34,8 +33,8 @@ symbol_info *current_function = nullptr;
 int bucket_size = 31;
 symbol_table *symbolTable = new symbol_table(bucket_size);
 
-string keywordArray[] = {"IF", "ELSE", "FOR", "WHILE", "INT", "FLOAT", "VOID", "RETURN", "PRINTLN"};
-set<string> keywords(keywordArray, keywordArray + 9);
+// string keywordArray[] = {"IF", "ELSE", "FOR", "WHILE", "INT", "FLOAT", "VOID", "RETURN", "PRINTLN"};
+// set<string> keywords(keywordArray, keywordArray + 9);
 
 enum non_terminals
 {
@@ -65,13 +64,12 @@ enum non_terminals
 };
 
 vector<stack<string>> non_terminals_stack(50);
-// set<int> error_lines;
 
 void printCompatibilityRelatedThings(symbol_info *s)
 {
   if (s == nullptr)
     return;
-  cout << s->getName() << ", id_type: " << s->id_type << ", variable_type: " << s->variable_type << ", array_type: " << s->array_type << ", current_index: " << s->current_index << ", return_type: " << s->return_type << endl
+  cout << s->getName() << ", id_type: " << s->id_type << ", variable_type: " << s->variable_type << ", array_type: " << s->array_type << ", return_type: " << s->return_type << endl
        << endl;
   ;
 }
@@ -81,7 +79,6 @@ void setCompatibleRelatedThings(symbol_info *s1, symbol_info *s2)
   s1->id_type = s2->id_type;
   s1->variable_type = s2->variable_type;
   s1->array_type = s2->array_type;
-  s1->current_index = s2->current_index;
 }
 
 bool checkCompatibility(symbol_info *s1, symbol_info *s2)
@@ -91,12 +88,6 @@ bool checkCompatibility(symbol_info *s1, symbol_info *s2)
 
 void yyerror(char *s)
 {
-  // fprintf(stderr,"%s\n",s);
-  //  err_line = line_count;
-  //  cout<<"Error at line no "<<line_count<<" : "<<s<<" lexeme: "<<yytext<<endl;
-  //  logfile<<"Error at line "<<line_count<<": "<<s<<endl<<endl;
-  //  errorfile<<"Error at line "<<line_count<<": "<<s<<endl<<endl;
-  //  syntax_error++;
   return;
 }
 
@@ -110,13 +101,12 @@ void printError(string str1)
 {
   // printf("Error at line %d: %s\n", line_count, str1.c_str());
   fprintf(errorout, "Error at line %d: %s\n\n", line_count, str1.c_str());
+  fprintf(logout, "Error at line %d: %s\n\n", line_count, str1.c_str());
   syntax_error_count++;
-  // error_lines.insert(line_count);
 }
 
 void stackPush(non_terminals nt, string str)
 {
-  // cout<<nt<<": "<<str<<endl;
   non_terminals_stack[nt].push(str);
 }
 
@@ -220,18 +210,11 @@ string stackPop(non_terminals nt)
   return str;
 }
 
-void setVariableAndArrayRelatedValues(symbol_info *symbolInfo, string type, symbol_info *s, int int_value = 0, float float_value = 0)
+void setVariableAndArrayRelatedValues(symbol_info *symbolInfo, string type, symbol_info *s)
 {
   symbolInfo->id_type = s->id_type;
-  symbolInfo->current_index = s->current_index;
-  symbolInfo->size_of_array = s->size_of_array;
   symbolInfo->variable_type = type;
   symbolInfo->array_type = type;
-  symbolInfo->int_value = int_value;
-  symbolInfo->float_value = float_value;
-  cout << line_count << " " << symbolInfo->getName() << " "<<  type << " "<< s->size_of_array << " "<< symbolInfo->size_of_array  << endl;
-
-  // cout << symbolInfo->getName() << " " << symbolInfo << endl;
 }
 
 void insertDeclarationListRecord(symbol_info *symbolInfo, bool is_array = false, int size_of_array = 0)
@@ -240,9 +223,7 @@ void insertDeclarationListRecord(symbol_info *symbolInfo, bool is_array = false,
   {
     if (size_of_array <= 0)
       printError("array size can not be less than 1");
-    symbolInfo->size_of_array = size_of_array;
     symbolInfo->id_type = ARRAY;
-    symbolInfo->current_index = -2;
   }
   else
   {
@@ -259,22 +240,17 @@ void setVariableAndArrayValues(string type)
   }
   for (int i = 0; i < variables.size(); i++)
   {
-    // setVariableRelatedValues(variables[i], type);
     symbol_info *s = symbolTable->lookupCurrentScope(variables[i]->getName());
-    // cout << "checking " ;
-    // printCompatibilityRelatedThings(s);
     if (s == nullptr)
     {
       symbolTable->insert(variables[i]->getName(), variables[i]->getType());
       s = symbolTable->lookup(variables[i]->getName());
-      // cout << s << " " << variables[i] << " "<< s->getName() << endl;
       setVariableAndArrayRelatedValues(s, type, variables[i]);
     }
     else
     {
       printError("Multiple declaration of " + s->getName());
     }
-    // delete variables[i];
   }
 
   variables.clear();
@@ -286,15 +262,10 @@ void insertIntoParameters(symbol_info *symbolInfo, string type)
   symbolInfo->variable_type = type;
   symbolInfo->array_type = type;
   parameters.push_back(symbolInfo);
-  // cout << " "
-  // cout << "in parameters ";
-  // printCompatibilityRelatedThings(symbolInfo);
 }
 
 void setFunctionParameters()
 {
-  // symbolTable->printAllScopeTable();
-  // cout << current_function->getName() << endl;
   if (current_function == nullptr)
     return;
   for (int i = 0; !current_function->is_parameters_inserted && i < parameters.size(); i++)
@@ -318,13 +289,11 @@ void checkFunctionParameters(string return_type, symbol_info *symbolInfo, bool i
       printError("Multiple declaration of " + parameters[i]->getName() + " in parameter");
     params.insert(parameters[i]->getName());
   }
-  // setFunctionRelatedValues(s, return_type, is_defined);
 
   s->id_type = FUNCTION;
   s->return_type = return_type;
   s->is_defined = is_defined;
   current_function = s;
-  // printCompatibilityRelatedThings(s);
 }
 
 void setAndClearFunctionThings()
@@ -403,21 +372,9 @@ symbol_info *checkArrayIndex(string var_name, symbol_info *idx)
   return nullptr;
 }
 
-void resetArrayIndex(symbol_info *s)
-{
-  // cout << line_count << endl;
-  if (s == nullptr)
-    return;
-  s->current_index = -2;
-}
 
 symbol_info *checkAssignCompatibility(symbol_info *lhs, symbol_info *rhs)
 {
-  // cout << line_count << endl << "1++" << endl;
-  // printCompatibilityRelatedThings(lhs);
-  // cout<< "2--" << endl;
-  // printCompatibilityRelatedThings(rhs);
-  // cout << "3.." << endl;
   if (lhs == nullptr || rhs == nullptr)
   {
     return nullptr;
@@ -450,7 +407,6 @@ symbol_info *checkAssignCompatibility(symbol_info *lhs, symbol_info *rhs)
 
 symbol_info *setIntermediateValues(string symbol_type, string variable_type, float float_value = 0)
 {
-  // if(float_value == 0)
   string name = to_string(float_value);
   name.erase(name.find_last_not_of('0') + 1, string::npos);
   if (variable_type == integer)
@@ -460,10 +416,6 @@ symbol_info *setIntermediateValues(string symbol_type, string variable_type, flo
   symbol_info *target = new symbol_info(name, symbol_type);
   target->id_type = VARIABLE;
   target->variable_type = variable_type;
-  target->float_value = float_value;
-  target->int_value = (int)float_value;
-  // cout << line_count << endl;
-  // printCompatibilityRelatedThings(target);
   return target;
 }
 
@@ -494,19 +446,11 @@ symbol_info *checkAndDoMulopThings(symbol_info *left, string optr, symbol_info *
   symbol_info *s = new symbol_info(left->getName() + optr + right->getName(), "intermediate");
   s->id_type = VARIABLE;
   s->variable_type = left->variable_type == fraction || right->variable_type == fraction ? fraction : integer;
-  // cout << line_count << endl;
-
   return s;
 }
 
 symbol_info *checkAdditionCompatibility(symbol_info *left, string optr, symbol_info *right)
 {
-  // cout << line_count << endl;
-  // cout << "1++" << endl;
-  // printCompatibilityRelatedThings(left);
-  // cout << "2--" << endl;
-  // printCompatibilityRelatedThings(right);
-  // cout << "3__" << endl;
   if (checkNullFunctionArrayVoid(left, right, optr))
     return nullptr;
 
@@ -553,8 +497,6 @@ symbol_info *checkFunctionArguments(symbol_info *si)
     args.clear();
     return nullptr;
   }
-  // cout << line_count << "  aaaaaaa" << endl;
-  // cout << args.size() << endl;
   if (args.size() != symbolInfo->sequence_of_parameters.size())
   {
     printError("Total number of arguments mismatch in function " + symbolInfo->getName());
@@ -585,7 +527,6 @@ symbol_info *checkFunctionArguments(symbol_info *si)
     }
     argus += args[i]->getName() + (i == args.size() - 1 ? "" : ",");
   }
-  // cout << argus << endl;
   argus += ")";
   symbol_info *s = new symbol_info(argus, intermediate);
   s->id_type = VARIABLE;
@@ -678,7 +619,6 @@ void enterNewScope()
   parameters.clear();
   isFunctionStarted = false;
 
-  // symbolTable->printAllScopeTable();
 }
 
 void printTable()
@@ -688,6 +628,5 @@ void printTable()
 
 void exitScope()
 {
-  // symbolTable->printAllScopeTable();
   symbolTable->exitScope();
 }

@@ -26,16 +26,10 @@ public:
     string return_type;
 
     // array
-    int size_of_array;
-    int current_index; // -2 for no value and -3 for invalid index
     string array_type;
-    vector<int> int_array;
-    vector<float> float_array;
 
     // variable
     string variable_type;
-    int int_value;
-    float float_value;
 
     bool isFunction()
     {
@@ -60,28 +54,27 @@ public:
         next = nullptr;
     }
 
-    symbol_info operator=(const symbol_info &symbolInfo)
-    {
-        this->name = symbolInfo.name;
-        this->type = symbolInfo.type;
-        this->id_type = symbolInfo.id_type;
+    // symbol_info operator=(const symbol_info &symbolInfo)
+    // {
+    //     this->name = symbolInfo.name;
+    //     this->type = symbolInfo.type;
+    //     this->id_type = symbolInfo.id_type;
 
-        this->is_defined = symbolInfo.is_defined;
-        this->return_type = symbolInfo.return_type;
-        for (int i = 0; symbolInfo.sequence_of_parameters.size(); i++)
-        {
-            this->sequence_of_parameters.push_back(symbolInfo.sequence_of_parameters[i]);
-        }
+    //     this->is_defined = symbolInfo.is_defined;
+    //     this->return_type = symbolInfo.return_type;
+    //     for (int i = 0; symbolInfo.sequence_of_parameters.size(); i++)
+    //     {
+    //         this->sequence_of_parameters.push_back(symbolInfo.sequence_of_parameters[i]);
+    //     }
 
-        this->size_of_array = symbolInfo.size_of_array;
-        this->current_index = symbolInfo.current_index;
+    //     this->size_of_array = symbolInfo.size_of_array;
 
-        this->variable_type = symbolInfo.variable_type;
-        this->int_value = symbolInfo.int_value;
-        this->float_value = symbolInfo.float_value;
+    //     this->variable_type = symbolInfo.variable_type;
+    //     this->int_value = symbolInfo.int_value;
+    //     this->float_value = symbolInfo.float_value;
 
-        return *this;
-    }
+    //     return *this;
+    // }
 
     ~symbol_info()
     {

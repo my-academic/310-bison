@@ -82,7 +82,7 @@ unit : var_declaration
      
 func_declaration : type_specifier ID LPAREN parameter_list RPAREN SEMICOLON
 {
-	string str = stackPop(type_specifier) + $2->getName() + "(" + stackPop(parameter_list) + ");";
+	string str = stackPop(type_specifier) + " " + $2->getName() + "(" + stackPop(parameter_list) + ");";
 	setFunctionValues(*$1, $2, false);
 	setAndClearFunctionThings();
 	stackPush(func_declaration, str);
@@ -114,7 +114,6 @@ func_definition : type_specifier ID LPAREN parameter_list RPAREN
 }  compound_statement
 {
 	string str = stackPop(type_specifier) + " " + $2->getName() + "()" + stackPop(compound_statement);
-	// setFunctionValues(*$1, $2, true);
 	stackPush(func_definition, str);
 	printLog("func_definition", "type_specifier ID LPAREN RPAREN compound_statement", str);
 	current_function = nullptr;
@@ -220,7 +219,7 @@ declaration_list : declaration_list COMMA ID
 {
 	$$ = new string((*$1) + ","+ $3->getName() + "[" + *$5 + "]");
 	insertDeclarationListRecord($3, true, stoi(*$5));
-	stackPush(declaration_list, stackPop(declaration_list) + "," + $3->getName());
+	stackPush(declaration_list, stackPop(declaration_list) + "," +  $3->getName() + "[" + *$5 + "]");
 	printLog("declaration_list", "declaration_list COMMA ID LTHIRD CONST_INT RTHIRD", *$$);
 }
  		  | ID
@@ -358,7 +357,6 @@ expression : logic_expression
 	printLog("expression", "variable ASSIGNOP logic_expression", str);
 
 	$$ = checkAssignCompatibility($1, $3);
-	resetArrayIndex($1);
 }	
 	   ;
 			
